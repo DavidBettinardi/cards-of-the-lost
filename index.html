@@ -608,6 +608,8 @@ b{color:#fff;font-weight:600}
 .trip.in .rider{animation:comein 2.2s ease-in-out forwards}
 @keyframes goout{0%{left:300px;top:164px;transform:scaleX(-1)}28%{left:30px;top:164px;transform:scaleX(-1)}34%{left:30px;top:164px;transform:scaleX(1)}64%{left:30px;top:44px;transform:scale(.62)}100%{left:1300px;top:44px;transform:scale(.62)}}
 @keyframes comein{0%{left:1300px;top:44px;transform:scale(.62) scaleX(-1)}36%{left:30px;top:44px;transform:scale(.62) scaleX(-1)}66%{left:30px;top:164px;transform:scaleX(1)}100%{left:300px;top:164px;transform:scaleX(1)}}
+.fallen .mlist{width:620px;max-height:240px}
+.fallen .logo{font-size:44px}
 
 </style>
 <div id="rotate" hidden>Turn your phone sideways for a bigger table.</div>
@@ -2378,7 +2380,7 @@ function openMap(){
     RUN.skipNext = false;
     const next = reachable().filter(([s]) => s < LEVELS);
     if (next.length){ const [s, k] = R.pick(next), n = RUN.map.stages[s - 1][k]; n.passed = true; RUN.map.at = [s, k]; RUN.map.path.push([s, k]); RUN.level = s; G.msg = `You drive straight past the ${stopName(n).toLowerCase().replace(/^the /, '')}.`; }
-  } else G.msg = 'Choose where to go next.';
+  } else G.msg = 'The road splits. Every way costs something.';
   save(); render();
 }
 function goStop(s, k){
@@ -2486,7 +2488,7 @@ async function attack(i){
   const z = liveZombie(i); if (!z) return;
   const slot = RUN.wsel, card = slot != null ? RUN.hand[slot] : null;
   const w = wstat(card);
-  if (w.kind === 'gun' && card.uses <= 0){ say(`Click. The ${w.n.toLowerCase()} is empty. Load ammo onto it.`); sfx('deny'); return; }
+  if (w.kind === 'gun' && card.uses <= 0){ say(`Click. The ${w.n.toLowerCase()} is dry. Feed it some ammo.`); sfx('deny'); return; }
   G.busy = true;
   const melee = w.kind !== 'gun';
   sfx(melee ? (card && card.id === 'chainsaw' ? 'saw' : 'swing') : (card.id === 'arcgun' ? 'zap' : card.id === 'shotgun' ? 'shotgun' : 'gun'));
@@ -2652,9 +2654,9 @@ function take(i){
     if (pile){ pile.v += c.v; LV.cells[i] = null; sfx('pick'); say(`${AMMO_NAMES[c.sub]}: ${pile.v} now.`); save(); render(); return; }
   }
   const where = stow(c);
-  if (!where){ say('Hands full, backpack full. Use something or throw it away.'); sfx('deny'); return; }
+  if (!where){ say('Hands full, pack full. Use something, or toss it.'); sfx('deny'); return; }
   LV.cells[i] = null; sfx('pick');
-  say(where === 'pack' ? `${cardName(c)} goes in the backpack.` : `${cardName(c)}.`);
+  say(where === 'pack' ? `${cardName(c)}, into the pack.` : `${cardName(c)}. Mine now.`);
   save(); render();
 }
 function rescue(i){
@@ -2678,7 +2680,7 @@ function clickCell(i){
     case 'hazard': if (c.id === 'alarm') hitAlarm(i); else if (c.id === 'barrel') hitBarrel(i); return;
     case 'loc': openLoc(i); return;
     case 'exit': tryExit(); return;
-    case 'hatch': G.panel = {type: 'confirm', text: 'Climb down the hatch? You leave the rest of this place behind.', yes: 'Climb down', no: 'Stay', onYes: enterBonus}; render(); return;
+    case 'hatch': G.panel = {type: 'confirm', text: 'A hatch, and stairs going down into the dark. Climb down, and leave the rest of this place behind?', yes: 'Climb down', no: 'Not yet', onYes: enterBonus}; render(); return;
     case 'car': G.panel = {type: 'car', i, cards: [], target: R.pick([6.5, 7, 7.5]), over: false}; render(); return;
   }
 }
@@ -2746,7 +2748,7 @@ function tryExit(){
   if (LV.locked){ say('Chained shut. The boss has the key.'); sfx('deny'); return; }
   const hidden = LV.cells.filter(c => c && !c.up).length;
   const leave = () => { G.panel = null; sfx('exit'); nextLevel(); };
-  if (hidden){ G.panel = {type: 'confirm', text: `Leave with ${hidden} card${hidden > 1 ? 's' : ''} still face down?`, yes: 'Leave', no: 'Stay', onYes: leave}; render(); }
+  if (hidden){ G.panel = {type: 'confirm', text: `${hidden} card${hidden > 1 ? 's' : ''} still face down. Walk away and never know?`, yes: 'Walk away', no: 'Stay a while', onYes: leave}; render(); }
   else leave();
 }
 function clickSlot(s){
@@ -2768,7 +2770,7 @@ function clickSlot(s){
     RUN.sel = null; render(); return;
   }
   RUN.sel = s;
-  say({self: `${cardName(c)}: tap it again to use it.`, zombie: `${cardName(c)}: now tap a zombie.`, gun: `${AMMO_NAMES[c.sub]}: now tap a gun in your hands to load it.`, passive: ITEMS.tools.d}[d.use]);
+  say({self: `${cardName(c)}, ready. Tap it again to use it.`, zombie: `${cardName(c)}, ready. Now pick a target.`, gun: `${AMMO_NAMES[c.sub]}, ready. Tap a gun to load it.`, passive: ITEMS.tools.d}[d.use]);
   sfx('pick'); render();
 }
 function loadAmmo(a, g){
@@ -2815,9 +2817,9 @@ async function useOn(s, i){
 function trash(){
   if (G.busy || G.panel) return;
   const s = RUN.sel != null ? RUN.sel : RUN.wsel;
-  if (s == null){ say('Select a card in your hands, then tap the bin to throw it away.'); return; }
+  if (s == null){ say('Select something in your hands first, then toss it.'); return; }
   const c = RUN.hand[s];
-  removeHand(s); say(`${cardName(c)} thrown away.`); sfx('trash'); save(); render();
+  removeHand(s); say(`The ${cardName(c).toLowerCase()} goes in the dirt.`); sfx('trash'); save(); render();
 }
 
 // ---------------------------------------------------------------- the car: hotwire to seven and a half
@@ -3423,6 +3425,7 @@ function sceneFor(){
     case 'journal': return ['lab', null];
     case 'shelter': case 'launch': return ['pines', null];
     case 'debrief': case 'siege': return ['pines', G.report && G.report.attack ? 'boss' : null];
+    case 'fallen': return ['streets', 'boss'];
     case 'intro': return [G.intro.bg, null];
     case 'map': case 'event': return [AREAS[RUN.area].bg, null];
     case 'play': return [AREAS[RUN.area].bg, LV.boss ? 'boss' : null];
@@ -3435,6 +3438,7 @@ function trackFor(){
     case 'title': case 'chars': case 'journal': return 'title';
     case 'shelter': case 'launch': case 'debrief': return 'shelter';
     case 'siege': return 'boss';
+    case 'fallen': return 'death';
     case 'intro': return G.intro.track || 'title';
     case 'map': case 'event': return AREAS[RUN.area].track;
     case 'play': return LV.boss ? 'boss' : AREAS[RUN.area].track;
@@ -3459,6 +3463,7 @@ function render(){
     case 'launch': el.innerHTML = launchHTML(); break;
     case 'debrief': el.innerHTML = debriefHTML(); break;
     case 'siege': el.innerHTML = siegeHTML(); break;
+    case 'fallen': el.innerHTML = fallenHTML(); break;
     case 'intro': el.innerHTML = introHTML(); break;
     case 'map': el.innerHTML = mapHTML(); break;
     case 'event': el.innerHTML = eventHTML(); break;
@@ -3488,13 +3493,13 @@ function titleHTML(){
     ${bigTitle('CARDS OF THE LOST', 'main')}
     <div class="tagline">Turn them over. Every card costs a dose.</div>
     <div class="menu">
-      ${saved ? `<button class="pbtn" data-a="continue">Continue · ${esc(saved.RUN.name || CHARS[saved.RUN.char].n)}</button>` : ''}
-      <button class="pbtn" data-a="shelter">The shelter${META.shelter ? ` · ${META.shelter.roster.length} survivor${META.shelter.roster.length === 1 ? '' : 's'}` : ''}</button>
-      <button class="pbtn ${META.nightOpen ? '' : 'locked'}" data-a="night">${META.nightOpen ? 'The long night' : 'The long night · finish the story'}</button>
-      <button class="pbtn" data-a="journal">Journal · ${META.pages.length}/${PAGES.length}</button>
-      <div class="toggles"><button class="pbtn small" data-a="music">Music: ${META.music ? 'on' : 'off'}</button><button class="pbtn small" data-a="mute">Sound: ${META.muted ? 'off' : 'on'}</button><button class="pbtn small" data-a="voice">Voice: ${META.voice ? 'on' : 'off'}</button></div>
+      ${saved ? `<button class="pbtn" data-a="continue">${esc(saved.RUN.name || CHARS[saved.RUN.char].n)} is still out there</button>` : ''}
+      <button class="pbtn" data-a="shelter">${!META.shelter ? 'Down to the shelter' : META.shelter.roster.length ? `Down to the shelter · ${META.shelter.roster.length} alive` : 'The shelter is silent'}</button>
+      <button class="pbtn ${META.nightOpen ? '' : 'locked'}" data-a="night">${META.nightOpen ? 'Walk the long night' : 'The long night · get the vaccine out first'}</button>
+      <button class="pbtn" data-a="journal">The journal · ${META.pages.length} of ${PAGES.length} pages</button>
+      <div class="toggles"><button class="pbtn small" data-a="music">Music · ${META.music ? 'playing' : 'silent'}</button><button class="pbtn small" data-a="mute">Sounds · ${META.muted ? 'hushed' : 'loud'}</button><button class="pbtn small" data-a="voice">Narrator · ${META.voice ? 'speaking' : 'quiet'}</button></div>
     </div>
-    <div class="metaline">${META.runs} runs · ${META.wins} escapes${META.bestNight ? ` · longest night: ${META.bestNight}` : ''}</div>
+    <div class="metaline">${META.runs} trips topside · the vaccine got out ${META.wins} time${META.wins === 1 ? '' : 's'}${META.bestNight ? ` · longest night: ${META.bestNight}` : ''}</div>
   </div>`;
 }
 function charsHTML(){
@@ -3507,15 +3512,15 @@ function charsHTML(){
       <div class="whobio">${esc(c.bio)}</div>
       <div class="whoperk">${esc(c.perk)}</div>
       <div class="whostat"><img class="g" src="${glyph('heart')}" alt=""> ${c.hp} health</div>
-      ${open ? '' : `<div class="wholock">Find ${c.need} journal pages to unlock (${META.pages.length}/${c.need})</div>`}
+      ${open ? '' : `<div class="wholock">Find ${c.need} journal pages and they will walk with you (${META.pages.length}/${c.need})</div>`}
     </button>`;
   }).join('');
-  return `<div class="shade"></div><div class="chars"><div class="hdr">${night ? 'THE LONG NIGHT' : 'WHO IS STILL ALIVE?'}</div><div class="whos">${cards}</div><button class="pbtn small" data-a="title">Back</button></div>`;
+  return `<div class="shade"></div><div class="chars"><div class="hdr">${night ? 'THE LONG NIGHT' : 'WHO IS STILL ALIVE?'}</div><div class="whos">${cards}</div><button class="pbtn small" data-a="title">Not tonight</button></div>`;
 }
 function journalHTML(){
-  const list = PAGES.map((p, i) => META.pages.includes(i) ? `<button class="jpage" data-a="read" data-i="${i}"><img src="${spriteURL('i_page')}" alt=""><span>${esc(p.t)}</span></button>` : `<div class="jpage missing"><span>Missing page</span></div>`).join('');
-  const open = G.reading != null ? `<div class="jread"><div class="jt">${esc(PAGES[G.reading].t)}</div><div class="jb">${esc(PAGES[G.reading].b)}</div></div>` : '<div class="jread empty">Pages turn up face down on the board. Pick one up to read it. Four pages unlock Mara. Eight unlock Dr. Okafor.</div>';
-  return `<div class="shade"></div><div class="journal"><div class="hdr">JOURNAL · ${META.pages.length}/${PAGES.length}</div><div class="jgrid">${list}</div>${open}<button class="pbtn small" data-a="title">Back</button></div>`;
+  const list = PAGES.map((p, i) => META.pages.includes(i) ? `<button class="jpage" data-a="read" data-i="${i}"><img src="${spriteURL('i_page')}" alt=""><span>${esc(p.t)}</span></button>` : `<div class="jpage missing"><span>Still out there</span></div>`).join('');
+  const open = G.reading != null ? `<div class="jread"><div class="jt">${esc(PAGES[G.reading].t)}</div><div class="jb">${esc(PAGES[G.reading].b)}</div></div>` : '<div class="jread empty">Pages turn up face down on the boards: radio logs, notes, memos. Somebody wrote each one for a reason. Four pages and Mara will walk the long night with you. Eight, and so will Dr. Okafor.</div>';
+  return `<div class="shade"></div><div class="journal"><div class="hdr">THE JOURNAL · ${META.pages.length} OF ${PAGES.length}</div><div class="jgrid">${list}</div>${open}<button class="pbtn small" data-a="title">Close the journal</button></div>`;
 }
 // The road for this area: every stop, the way you came, and where you can go next.
 function mapHTML(){
@@ -3538,7 +3543,7 @@ function mapHTML(){
   const at = M.at ? M.stages[M.at[0] - 1][M.at[1]] : null;
   const me = `<img class="me" src="${spriteURL('portrait_' + (RUN.face || RUN.char) + '_0', () => portrait(RUN.face || RUN.char, 0))}" style="left:${at ? X(M.at[0]) - 22 : 40}px;top:${at ? Y(at.lane) - 112 : Y(1) - 24}px" alt="">`;
   return `<div class="shade light"></div><div class="map">
-    <div class="maphdr"><div class="hdr">${esc(AREAS[RUN.area].name.toUpperCase())}</div><div class="mapsub">Stop ${Math.min(LEVELS, (M.at ? M.at[0] : 0) + 1)} of ${LEVELS}. The dead are waiting at the end.</div></div>
+    <div class="maphdr"><div class="hdr">${esc(AREAS[RUN.area].name.toUpperCase())}</div><div class="mapsub">Stop ${Math.min(LEVELS, (M.at ? M.at[0] : 0) + 1)} of ${LEVELS}. Something big is waiting at the end of the road.</div></div>
     <svg class="maplines" width="1280" height="720">${lines}</svg>${stops}${me}
     ${runBar()}
   </div>`;
@@ -3547,12 +3552,12 @@ function mapHTML(){
 function runBar(){
   const inv = [...RUN.hand, ...RUN.pack].filter(Boolean).map(c => `<img class="mini" src="${spriteURL(cardSprite(c))}" title="${esc(cardName(c))}" alt="">`).join('');
   return `<div class="runbar"><span class="rb"><img class="g" src="${glyph('heart')}" alt=""> ${RUN.hp}/${RUN.maxHp} health</span><span class="rb vac">${RUN.vac}/${RUN.maxVac} vaccine</span><span class="rbinv">${inv}</span>
-    ${RUN.mission ? `<span class="rb scrap">${RUN.scrap} scrap</span>` : ''}<div id="msg" class="rbmsg"><div>${esc(G.msg)}</div></div>${G.screen === 'map' ? (RUN.mission && RUN.level >= 1 ? '<button class="pbtn small home" data-a="goHome">Head home</button>' : '') + '<button class="pbtn small" data-a="quit">Save and quit</button>' : ''}</div>`;
+    ${RUN.mission ? `<span class="rb scrap">${RUN.scrap} scrap</span>` : ''}<div id="msg" class="rbmsg"><div>${esc(G.msg)}</div></div>${G.screen === 'map' ? (RUN.mission && RUN.level >= 1 ? '<button class="pbtn small home" data-a="goHome">Turn back for the shelter</button>' : '') + '<button class="pbtn small" data-a="quit">Hole up for now</button>' : ''}</div>`;
 }
 function eventHTML(){
   const E = G.ev, D = EVENTS[E.id];
   const body = E.out
-    ? `<p class="evtext out">${esc(D.out[E.out])}</p><div class="gains">${E.gains.map(g => `<span class="${g.startsWith('- ') || g.includes('left behind') ? 'neg' : 'pos'}">${esc(g)}</span>`).join('')}</div><button class="pbtn" data-a="evDone">Continue</button>`
+    ? `<p class="evtext out">${esc(D.out[E.out])}</p><div class="gains">${E.gains.map(g => `<span class="${g.startsWith('- ') || g.includes('left behind') ? 'neg' : 'pos'}">${esc(g)}</span>`).join('')}</div><button class="pbtn" data-a="evDone">${E.id === 'final' ? 'So be it' : E.id === 'fork' ? 'Start walking' : 'Press on'}</button>`
     : E.bench ? benchHTML() : `<div class="evopts">${D.opts.map((o, i) => { if (o.req && !o.req()) return ''; const ok = !o.need || invFind(o.need); return `<button class="pbtn evopt" data-a="evPick" data-i="${i}" ${ok ? '' : 'disabled'}><span>${esc(o.l)}</span>${o.hint ? `<small>${esc(o.hint)}${ok ? '' : ' · you have none'}</small>` : ''}</button>`; }).join('')}</div>`;
   return `<div class="shade"></div><div class="event">
     <img class="evart" src="${spriteURL(D.art)}" alt="">
@@ -3563,14 +3568,14 @@ function eventHTML(){
 function benchHTML(){
   const guns = [...RUN.hand, ...RUN.pack].filter(c => c && modsFor(c).length);
   const rows = guns.flatMap(g => modsFor(g).map(m => `<button class="pbtn evopt" data-a="benchPick" data-u="${g.uid}" data-m="${m}"><span>${esc(MODS[m].n)} · ${esc(cardName(g))}</span><small>${esc(MODS[m].d)}</small></button>`)).join('');
-  return `<div class="evopts bench">${rows}<button class="pbtn small" data-a="benchBack">Back</button></div>`;
+  return `<div class="evopts bench">${rows}<button class="pbtn small" data-a="benchBack">Leave the bench</button></div>`;
 }
 function introHTML(){
   const I = G.intro;
   return `<div class="intro" data-a="introNext">
     <div class="introwin"><div class="introtitle">${esc(I.title)}</div></div>
     <div class="introtext">${I.lines.map((l, k) => `<p style="animation-delay:${.4 + k * 1.1}s">${esc(l)}</p>`).join('')}</div>
-    <div class="introhint">Click to continue</div>
+    <div class="introhint">${TOUCH ? 'Tap' : 'Click'} to go on</div>
   </div>`;
 }
 function endHTML(){
@@ -3585,9 +3590,9 @@ function endHTML(){
       <div><b>${s.levels}</b><span>places cleared</span></div><div><b>${s.pages}</b><span>new pages</span></div>
       <div><b>${s.saved || 0}</b><span>survivors freed</span></div><div><b>+${E.salvage || 0}</b><span>salvage</span></div>
     </div>
-    ${E.mission || E.defense ? `<div class="unlock">${esc(E.name)} is gone. Their name goes on the wall.</div><button class="pbtn" data-a="${E.mission ? 'debrief' : 'shelter'}">Back to the shelter</button>` : ''}
+    ${E.mission || E.defense ? `<div class="unlock">${esc(E.name)} is gone. Someone will scratch their name into the wall${fallen() ? ', if anyone is left to do it' : ''}.</div><button class="pbtn" data-a="${E.mission ? 'debrief' : 'shelter'}">${E.mission ? 'Carry the news home' : 'Go back down'}</button>` : ''}
     ${E.won ? `<div class="unlock">Ending: ${esc(ENDINGS[E.ending || 'north'].t)} · ${META.endings.length} of ${Object.keys(ENDINGS).length} endings found</div>` : ''}
-    ${E.mission || E.defense ? '' : '<button class="pbtn" data-a="title">Title</button>'}
+    ${E.mission || E.defense ? '' : '<button class="pbtn" data-a="title">Back into the dark</button>'}
   </div>`;
 }
 function playHTML(){
@@ -3644,40 +3649,40 @@ function panelHTML(){
     body = `<div class="ptext">${esc(P.text)}</div><div class="prow"><button class="pbtn" data-a="yes">${esc(P.yes)}</button><button class="pbtn" data-a="no">${esc(P.no)}</button></div>`;
   } else if (P.type === 'page'){
     const pg = PAGES[P.page];
-    body = `<div class="paper"><div class="pt">${esc(pg.t)}</div><div class="pb">${esc(pg.b)}</div></div><div class="ptext small">${P.fresh ? `New page. ${META.pages.length}/${PAGES.length} found.` : 'You have read this one before.'}</div><div class="prow"><button class="pbtn" data-a="no">Keep going</button></div>`;
+    body = `<div class="paper"><div class="pt">${esc(pg.t)}</div><div class="pb">${esc(pg.b)}</div></div><div class="ptext small">${P.fresh ? `Into the journal. ${META.pages.length} of ${PAGES.length} pages found.` : 'You have read this one before. It does not get better.'}</div><div class="prow"><button class="pbtn" data-a="no">Fold it away</button></div>`;
   } else if (P.type === 'pack'){
     const cells = RUN.pack.map((c, k) => c ? cardHTML(c, `data-a="packslot" data-k="${k}" data-tip="pack:${k}" style="position:relative"`, 'inline') : `<div class="slot empty inline"></div>`).join('');
     const selName = RUN.sel != null ? RUN.hand[RUN.sel] : RUN.wsel != null ? RUN.hand[RUN.wsel] : null;
-    body = `<div class="ptitle">BACKPACK</div><div class="ptext small">Tap a card here to move it to your hands. ${selName ? `Or put away ${esc(cardName(selName))}.` : 'Select a card in your hands first to put it away.'}</div>
+    body = `<div class="ptitle">THE BACKPACK</div><div class="ptext small">Tap a card here to dig it out into your hands. ${selName ? `Or shove the ${esc(cardName(selName).toLowerCase())} in here.` : 'Select a card in your hands first to stow it.'}</div>
       <div class="offers">${cells}</div>
-      <div class="prow">${selName ? '<button class="pbtn" data-a="stash">Put it away</button>' : ''}<button class="pbtn" data-a="no">Close</button></div>`;
+      <div class="prow">${selName ? '<button class="pbtn" data-a="stash">Stow it</button>' : ''}<button class="pbtn" data-a="no">Shoulder the pack</button></div>`;
   } else if (P.type === 'loc'){
     const c = LV.cells[P.i], O = c.offer;
     const offers = O.cards.map((o, k) => cardHTML(o, `data-a="offer" data-k="${k}" data-tip="offer:${k}" style="position:relative"`, 'inline')).join('');
-    let help = O.mode === 'trade' ? (P.give != null ? `Now tap the card you want for your ${esc(cardName(RUN.hand[P.give]))}.` : 'Tap one of your cards below to offer it, then tap theirs.') : O.mode === 'rest' ? 'Rest here, or take one thing you find.' : `Take ${O.picks === 1 ? 'one' : O.picks}.`;
+    let help = O.mode === 'trade' ? (P.give != null ? `Now tap what you want for your ${esc(cardName(RUN.hand[P.give]).toLowerCase())}.` : 'They will trade, one for one. Tap one of your cards below to offer it, then tap theirs.') : O.mode === 'rest' ? 'Four walls and a door that locks. Rest, or take one thing you find.' : `There is time to take ${O.picks === 1 ? 'one thing' : O.picks + ' things'}. Choose.`;
     const yours = O.mode === 'trade' ? `<div class="offers mine">${RUN.hand.map((h, s) => h ? cardHTML(h, `data-a="give" data-s="${s}" style="position:relative"`, 'inline ' + (P.give === s ? 'chosen' : '')) : '').join('')}</div>` : '';
     body = `<div class="ptitle">${esc(LOCS[c.id].n.toUpperCase())}</div><div class="ptext small">${help}</div><div class="offers">${offers}</div>${yours}
-      <div class="prow">${O.mode === 'rest' ? `<button class="pbtn" data-a="rest">Rest: +3 health</button>` : ''}<button class="pbtn" data-a="leaveLoc">Leave</button></div>`;
+      <div class="prow">${O.mode === 'rest' ? `<button class="pbtn" data-a="rest">Sleep an hour · +3 health</button>` : ''}<button class="pbtn" data-a="leaveLoc">Move on</button></div>`;
   } else if (P.type === 'car'){
     const total = P.cards.reduce((a, b) => a + b, 0);
     const shown = P.cards.map(v => `<div class="wirecard"><span>${v === .5 ? '½' : v}</span></div>`).join('') || '<div class="wirecard none"><span>?</span></div>';
-    const verdict = P.over === 'win' ? 'It turns over!' : P.over === 'bust' ? 'Too much. Sparks, and the horn.' : P.over === 'short' ? 'Not enough. It dies.' : '';
-    body = `<div class="ptitle">HOTWIRE</div><div class="ptext">Get to at least ${String(P.target).replace('.5', '½')} without going over 7½, then start the engine.</div>
+    const verdict = P.over === 'win' ? 'It catches. Go, go, go.' : P.over === 'bust' ? 'Too much. Sparks, and the horn screams.' : P.over === 'short' ? 'A cough, a shudder. Nothing.' : '';
+    body = `<div class="ptitle">HOTWIRE IT</div><div class="ptext">Strip wires until you reach at least ${String(P.target).replace('.5', '½')}. Go over 7½ and the horn goes off. Then turn it over.</div>
       <div class="carrow"><button class="card back inline" data-a="carDraw" ${P.over ? 'disabled' : ''}><img class="cb" src="${spriteURL('ui_back')}" alt=""></button><div class="wires">${shown}</div><img class="carpic" src="${spriteURL('x_car')}" alt=""></div>
       <div class="cartotal ${total > 7.5 ? 'bad' : total >= P.target ? 'good' : ''}">${String(total).replace('.5', '½')} / 7½</div>
-      <div class="ptext">${verdict || 'Face cards are worth ½.'}</div>
-      <div class="prow">${P.over ? '' : `<button class="pbtn" data-a="carStart" ${P.cards.length ? '' : 'disabled'}>Start engine</button><button class="pbtn" data-a="no">Walk away</button>`}</div>`;
+      <div class="ptext">${verdict || 'Face cards count for ½.'}</div>
+      <div class="prow">${P.over ? '' : `<button class="pbtn" data-a="carStart" ${P.cards.length ? '' : 'disabled'}>Turn the key</button><button class="pbtn" data-a="no">Leave it</button>`}</div>`;
   } else if (P.type === 'menu'){
-    body = `<div class="ptitle">PAUSED</div><div class="ptext small">Your run is saved after every move.</div>
-      <div class="prow col"><button class="pbtn" data-a="no">Resume</button><button class="pbtn" data-a="help">How to play</button><div class="toggles"><button class="pbtn small" data-a="music">Music: ${META.music ? 'on' : 'off'}</button><button class="pbtn small" data-a="mute">Sound: ${META.muted ? 'off' : 'on'}</button><button class="pbtn small" data-a="voice">Voice: ${META.voice ? 'on' : 'off'}</button></div><button class="pbtn" data-a="quit">Save and quit</button><button class="pbtn danger" data-a="giveup">Give up this run</button></div>`;
+    body = `<div class="ptitle">CATCH YOUR BREATH</div><div class="ptext small">Every step is remembered. You can walk away and come back to this.</div>
+      <div class="prow col"><button class="pbtn" data-a="no">Back to it</button><button class="pbtn" data-a="help">The rules of the dead</button><div class="toggles"><button class="pbtn small" data-a="music">Music · ${META.music ? 'playing' : 'silent'}</button><button class="pbtn small" data-a="mute">Sounds · ${META.muted ? 'hushed' : 'loud'}</button><button class="pbtn small" data-a="voice">Narrator · ${META.voice ? 'speaking' : 'quiet'}</button></div><button class="pbtn" data-a="quit">Hole up for now</button><button class="pbtn danger" data-a="giveup">Lie down and let it end</button></div>`;
   } else if (P.type === 'help'){
-    body = `<div class="ptitle">HOW TO SURVIVE</div><div class="help">
-      <p><b>Turn cards over</b> by tapping them. Each one costs 1 vaccine (the syringe). At 0 vaccine, you lose 1 health every turn.</p>
-      <p><b>Fight</b> by tapping a zombie. You hit with whatever weapon is lit yellow, or your fists. Its health is top left, its attack bottom right, and the red claw marks count down the turns until it strikes.</p>
-      <p><b>Melee weapons</b> wear out, and anything you do not kill claws straight back. <b>Guns</b> never get clawed back, but they make noise: three shots and something comes to look.</p>
-      <p><b>Take</b> food, antidotes, weapons and gear by tapping them. Tap an item in your hands to select it, tap again to use it. Ammo: select it, then tap the gun.</p>
-      <p><b>Find the exit.</b> It is always somewhere in the last two columns. Leave when you choose: whatever is still face down stays behind.</p></div>
-      <div class="prow"><button class="pbtn" data-a="no">Got it</button></div>`;
+    body = `<div class="ptitle">THE RULES OF THE DEAD</div><div class="help">
+      <p><b>Every card you turn costs a dose.</b> Tap a face-down card to turn it: 1 vaccine from the syringe. When the syringe runs dry, the infection takes 1 health every turn.</p>
+      <p><b>Fight what you find.</b> Tap a zombie to hit it with whatever is lit yellow in your hands, or your fists. Health top left, bite bottom right. The red claw marks count down the turns until it strikes.</p>
+      <p><b>Blades wear out, and the dead hit back.</b> Anything you swing at and fail to kill claws you in return. <b>Guns</b> never get clawed back, but they are loud: three shots and something comes to see.</p>
+      <p><b>Take what you can carry.</b> Tap loot to pick it up. Tap something in your hands to ready it, tap it again to use it. Ammo: ready it, then tap the gun.</p>
+      <p><b>Find the way out.</b> It is always in the last two columns. Leave whenever you like, but anything still face down stays behind.</p></div>
+      <div class="prow"><button class="pbtn" data-a="no">Understood</button></div>`;
   }
   return `<div class="panel frame ${P.type}">${body}</div>`;
 }
@@ -3690,6 +3695,7 @@ const H = {
   journal(){ G.screen = 'journal'; G.reading = null; render(); },
   shelter(){
     const R0 = G.report;
+    if (fallen()){ G.report = null; G.screen = 'fallen'; render(); return; }
     G.screen = 'shelter'; G.sp = null; G.selM = null;
     if (R0 && G.screen === 'shelter'){ G.pops = R0.pops; if (R0.outcome !== 'dead') G.homecoming = {face: R0.face}; G.report = null;
       if (!G.headless){ if (G.pops && G.pops.length) setTimeout(() => sfx('collect'), 500); setTimeout(() => { G.pops = null; G.homecoming = null; if (G.screen === 'shelter') render(); }, 2600); } else { G.pops = null; G.homecoming = null; } }
@@ -3716,12 +3722,13 @@ const H = {
   siege(){ G.screen = 'siege'; render(); },
   defend(d){ startDefense(+d.u); },
   bar(){ barTheDoor(); },
+  rebuild(){ newShelter(0); saveMeta(); G.toast = 'Three survivors, one hole in the ground, and a kitchen that mostly works. It is a start.'; G.screen = 'shelter'; G.sp = null; G.selM = null; render(); },
   read(d){ G.reading = +d.i; render(); },
   pick(d){ newRun(d.id, G.pickMode || 'story'); },
   continue(){ const s = store.get(RUN_KEY); if (!s) return; RUN = s.RUN; LV = s.LV; UID = s.UID || 5000; RUN.flags = RUN.flags || {}; if (RUN.face && RUN.face.startsWith('dr')){ const m = [...META.shelter.roster, ...META.shelter.dead].find(x => x.face === RUN.face); if (m) ensureFace(m.face, m.seed); }
     if (!LV){ G.panel = null; G.busy = false; G.ev = s.ev || null; G.screen = s.screen === 'event' && G.ev ? 'event' : 'map'; render(); return; }
     LV.cells.concat(RUN.hand, RUN.pack).forEach(c => { if (c){ c.flipAt = c.hitAt = c.riseAt = c.lunge = 0; } }); LV.dealT = now(); G.curtain = null; G.ghosts = [];
-    G.screen = 'play'; G.panel = null; G.busy = false; G.msg = 'Where was I.'; render(); },
+    G.screen = 'play'; G.panel = null; G.busy = false; G.msg = 'Where was I. Right. Here.'; render(); },
   mute(){ META.muted = !META.muted; saveMeta(); SFX.unlock(); render(); },
   music(){ META.music = !META.music; saveMeta(); SFX.unlock(); MUSIC.play(trackFor()); render(); },
   voice(){ META.voice = !META.voice; saveMeta(); if (!META.voice) VOICE.stop(); SFX.unlock(); render(); },
@@ -3754,11 +3761,11 @@ const H = {
     const k = RUN.pack.indexOf(null); if (k < 0){ say('The backpack is full.'); return; }
     RUN.pack[k] = RUN.hand[s]; removeHand(s); sfx('pick'); save(); render();
   },
-  portrait(){ if (G.busy || G.panel) return; if (RUN.dodge && !RUN.dodging){ RUN.dodging = true; RUN.dodge = false; say('Ready to dodge the next attack.'); render(); } },
+  portrait(){ if (G.busy || G.panel) return; if (RUN.dodge && !RUN.dodging){ RUN.dodging = true; RUN.dodge = false; say('Weight on the balls of your feet. The next one misses.'); render(); } },
   menu(){ if (G.busy) return; G.panel = {type: 'menu'}; render(); },
   help(){ G.panel = {type: 'help'}; render(); },
   quit(){ save(); G.panel = null; G.screen = 'title'; render(); },
-  giveup(){ G.panel = {type: 'confirm', text: RUN.mission || RUN.defense ? `Give up? ${RUN.name} will not come home.` : 'Give up this run for good?', yes: 'Give up', no: 'Keep going', onYes: () => { G.panel = null; RUN.hp = 0; gameOver(); }}; render(); },
+  giveup(){ G.panel = {type: 'confirm', text: RUN.mission || RUN.defense ? `Lie down here? ${RUN.name} will not come home.` : 'Lie down and let it end?', yes: 'Let it end', no: 'Not yet', onYes: () => { G.panel = null; RUN.hp = 0; gameOver(); }}; render(); },
   yes(){ const P = G.panel; G.panel = null; P.onYes(); },
   no(){ G.panel = null; render(); },
   offer(d){
@@ -3774,7 +3781,7 @@ const H = {
     save(); render();
   },
   give(d){ G.panel.give = +d.s; render(); },
-  rest(){ const c = LV.cells[G.panel.i]; healUp(3); c.used = true; G.panel = null; say('An hour of sleep with one eye open.'); sfx('eat'); save(); render(); },
+  rest(){ const c = LV.cells[G.panel.i]; healUp(3); c.used = true; G.panel = null; say('An hour of sleep, with one eye open.'); sfx('eat'); save(); render(); },
   leaveLoc(){ G.panel = null; render(); },
   carDraw(){ carDraw(); },
   carStart(){ carStart(); },
@@ -3790,10 +3797,10 @@ function tipFor(key){
   switch (k){
     case 'cell': { const c = LV.cells[+v]; return c ? describe(c) : null; }
     case 'slot': { const c = RUN.hand[+v]; return c ? describe(c) : null; }
-    case 'pack': { if (v != null){ const c = RUN.pack[+v]; return c ? describe(c) : null; } return '<b>Backpack</b><br>Extra room. Tap to open it.'; }
+    case 'pack': { if (v != null){ const c = RUN.pack[+v]; return c ? describe(c) : null; } return '<b>The backpack</b><br>Everything that does not fit in your hands. Tap to dig through it.'; }
     case 'offer': { const c = LV.cells[G.panel.i]; return c && c.offer && c.offer.cards[+v] ? describe(c.offer.cards[+v]) : null; }
     case 'fists': return describe({kind: 'weapon', id: 'fists', uses: Infinity, up: true});
-    case 'trash': return '<b>Bin</b><br>Select a card in your hands, then tap here to throw it away.';
+    case 'trash': return '<b>Toss it</b><br>Select a card in your hands, then tap here to throw it away for good.';
     case 'vac': return `<b>Vaccine ${RUN.vac}/${RUN.maxVac}</b><br>Turning a card costs 1. At 0, the infection costs you 1 health every turn.`;
     case 'hp': return `<b>Health ${Math.max(0, RUN.hp)}/${RUN.maxHp}</b><br>Food restores it.`;
     case 'portrait': return `<b>${esc(RUN.name || CHARS[RUN.char].n)}</b><br>${esc(CHARS[RUN.char].perk)}${RUN.mode === 'night' ? ' Tap to get ready to dodge, once per board.' : ''}`;
@@ -3874,14 +3881,14 @@ window.__COTL = {G, H, AREAS, shelterBoot, ROOMS: () => ROOMS, launchMission: (.
 
 // Rooms. work: survivors can be assigned (two per room) and add to its output.
 const ROOMS = {
-  bunks:     {n: 'Bunks', icon: 'r_bed', work: false, cost: [8, 18, 30], out: lv => `Beds for ${3 * lv}`},
-  kitchen:   {n: 'Kitchen', icon: 'i_can', work: true, cost: [10, 20, 34], out: (lv, w) => `+${2 * lv + w} food after each mission`},
-  workshop:  {n: 'Workshop', icon: 'i_tools', work: true, cost: [12, 24, 40], out: (lv, w) => `+${lv + w * lv} scrap after each mission`},
-  infirmary: {n: 'Infirmary', icon: 'i_medkit', work: true, cost: [12, 24, 40], out: (lv, w) => `Whoever goes out takes ${lv} bandage${lv > 1 ? 's' : ''}${w ? ' and an antidote' : ''}`},
-  armory:    {n: 'Armory', icon: 'w_shotgun', work: false, cost: [14, 28, 46], out: lv => ['', 'Whoever goes out takes a blade', 'Whoever goes out takes a good weapon', 'Whoever goes out takes a good weapon with a quirk'][lv]},
-  storage:   {n: 'Storage', icon: 'ui_pack', work: false, cost: [6, 14, 26], out: lv => `Keeps ${4 * lv} cards of gear brought home`},
-  radio:     {n: 'Radio', icon: 'r_radio', work: true, cost: [12, 24, 40], out: (lv, w) => `Calls in a new survivor every ${Math.ceil(RADIO_CALL / (lv + w))} missions${lv >= 2 ? '. Its chatter tells you what waits at every event on the map' : ''}`},
-  guard:     {n: 'Guard post', icon: 'r_wall', work: true, cost: [10, 22, 38], out: (lv, w) => `${lv + w} fewer of them get to the door`},
+  bunks:     {n: 'Bunks', icon: 'r_bed', work: false, cost: [8, 18, 30], out: lv => `Sleeps ${3 * lv}, if nobody snores`},
+  kitchen:   {n: 'Kitchen', icon: 'i_can', work: true, cost: [10, 20, 34], out: (lv, w) => `Cooks ${2 * lv + w} food every time someone comes home`},
+  workshop:  {n: 'Workshop', icon: 'i_tools', work: true, cost: [12, 24, 40], out: (lv, w) => `Strips ${lv + w * lv} scrap from junk after every trip`},
+  infirmary: {n: 'Infirmary', icon: 'i_medkit', work: true, cost: [12, 24, 40], out: (lv, w) => `Sends ${lv} bandage${lv > 1 ? 's' : ''}${w ? ' and a dose of antidote' : ''} up with whoever goes`},
+  armory:    {n: 'Armory', icon: 'w_shotgun', work: false, cost: [14, 28, 46], out: lv => ['', 'Hands whoever goes up a blade', 'Hands whoever goes up something better than a blade', 'Hands whoever goes up the good stuff, quirks and all'][lv]},
+  storage:   {n: 'Storage', icon: 'ui_pack', work: false, cost: [6, 14, 26], out: lv => `Holds ${4 * lv} things worth bringing home`},
+  radio:     {n: 'Radio', icon: 'r_radio', work: true, cost: [12, 24, 40], out: (lv, w) => `Picks up a new voice every ${Math.ceil(RADIO_CALL / (lv + w))} trips, and talks them in${lv >= 2 ? '. The chatter says what waits on the road' : ''}`},
+  guard:     {n: 'Guard post', icon: 'r_wall', work: true, cost: [10, 22, 38], out: (lv, w) => `Turns ${lv + w} of them away before they reach the door`},
 };
 const RADIO_CALL = 6, FLOOR_COST = [0, 20, 40], SLOTS = 4;
 // Who can turn up. Rescued survivors and the three you know join for good; drifters answer the radio.
@@ -3918,10 +3925,10 @@ function drifter(){
   return {uid: sh.nextUid++, name: R.pick(DRIFTER_NAMES) + ' ' + R.pick(DRIFTER_SURNAMES), base: 'drifter', face, seed, maxHp: 8, missions: 0, kills: 0, room: null};
 }
 function newShelter(legacyScrap){
-  META.shelter = {v: 1, scrap: 12 + legacyScrap, food: 6, missions: 0, floors: 1, nextUid: 1,
+  META.shelter = {scrap: 12 + legacyScrap, food: 6, missions: 0, floors: 1, nextUid: 1,
     rooms: [[{t: 'bunks', lv: 1}, {t: 'kitchen', lv: 1}, {t: 'storage', lv: 1}, null], [null, null, null, null], [null, null, null, null]],
-    roster: [], dead: [], joined: ['jonah'], storage: [], cleared: {}, flags: {}, seen: [], radio: 0, hungry: false, won: false};
-  META.shelter.roster.push(member('jonah'), drifter());
+    roster: [], dead: [], joined: ['jonah', 'mara', 'okafor'], storage: [], cleared: {}, flags: {}, seen: [], radio: 0, hungry: false, won: false, v: 2};
+  META.shelter.roster.push(member('jonah'), member('mara'), member('okafor'));
 }
 // The shelter replaces the old camp: its salvage and upgrades come across as scrap.
 function shelterBoot(){
@@ -3931,16 +3938,21 @@ function shelterBoot(){
     META.salvage = 0; META.ups = []; saveMeta();
   }
   const sh = S();
+  // shelters from before the crew of three: Mara and Okafor come down the ladder, beds or not
+  if ((sh.v || 1) < 2){ for (const id of ['mara', 'okafor']) if (!sh.joined.includes(id)){ sh.joined.push(id); sh.roster.push(member(id)); } sh.v = 2; saveMeta(); }
   sh.roster.concat(sh.dead).forEach(m => { if (m.seed) ensureFace(m.face, m.seed); });
 }
-// Mara and Okafor find the shelter once you know enough of the story (journal pages).
-function checkJoins(notes){
-  const sh = S();
-  for (const [id, need] of [['mara', 4], ['okafor', 8]]){
-    if (META.pages.length >= need && !sh.joined.includes(id) && sh.roster.length < capacity()){
-      sh.joined.push(id); sh.roster.push(member(id)); notes.push(`${CHARS[id].n} found the shelter. ${CHARS[id].bio}`);
-    }
-  }
+const fallen = () => META.shelter && !META.shelter.roster.length;
+// Everyone is gone. What the shelter was, and a way to begin again somewhere else.
+function fallenHTML(){
+  const sh = S(), days = sh.missions + 1;
+  const names = sh.dead.slice().reverse().map(d => `<div class="mrow"><img src="${faceURL(d.face, 3)}" alt=""><span><b>${esc(d.name)}</b><br>${d.turned ? 'Turned' : 'Fell'} at ${esc(d.where)}. ${d.missions} trip${d.missions === 1 ? '' : 's'} topside, ${d.kills} of the dead put down.</span></div>`).join('');
+  return `<div class="shade red"></div><div class="debrief fallen">
+    ${bigTitle('THE SHELTER FALLS SILENT')}
+    <div class="dlines"><p>Nobody is left to answer the radio. The kitchen fire goes out on day ${days}. The lights stay on a while longer, for no one.</p>
+      <p>${sh.dead.length} name${sh.dead.length === 1 ? '' : 's'} on the wall. ${Object.values(sh.cleared).reduce((a, b) => a + b, 0)} trips came home whole.${sh.won ? ' The vaccine got out. That was something.' : ''}</p></div>
+    <div class="mlist">${names}</div>
+    <div class="prow"><button class="pbtn" data-a="rebuild">Find another hole in the ground</button><button class="pbtn small" data-a="title">Leave them to it</button></div></div>`;
 }
 function unlockedAreas(){
   const c = S().cleared;
@@ -4010,13 +4022,12 @@ function produce(rep){
     if (sh.roster.length < capacity()){ sh.radio -= RADIO_CALL; const d = drifter(); sh.roster.push(d); rep.notes.push(`${d.name} answered the radio and made it to the door.`); }
     else rep.notes.push('Someone answered the radio, but there is no bed for them.');
   }
-  checkJoins(rep.notes);
-  if (!sh.roster.length){ const d = drifter(); sh.roster.push(d); rep.notes.push(`The shelter stood empty for a day. Then ${d.name} found the door.`); }
+  if (!sh.roster.length) rep.notes.push('Nobody is left to eat what the kitchen made.');
 }
 // The dead follow the noise home. More of them as time goes on; the guard post turns some away.
 function rollAttack(){
   const sh = S();
-  if (sh.missions < 2 || !R.chance(Math.min(.45, .22 + sh.missions * .02))) return 0;
+  if (!sh.roster.length || sh.missions < 2 || !R.chance(Math.min(.45, .22 + sh.missions * .02))) return 0;
   const guard = sumRooms('guard', (r, f, s) => r.lv + workersIn(f, s).length);
   return Math.max(0, Math.min(5, 2 + Math.floor(sh.missions / 6)) - guard);
 }
@@ -4043,7 +4054,7 @@ function defenseEnd(won){
   const sh = S(), m = sh.roster.find(x => x.uid === RUN.member), n = RUN.defense, notes = [];
   if (won){
     const prize = 2 + n; sh.scrap += prize; if (m) m.kills += RUN.stats.kills;
-    notes.push(`${RUN.name} held the door. ${prize} scrap picked off the dead.`);
+    notes.push(`${RUN.name} held the door. ${prize} scrap picked off what is left of them.`);
   } else {
     sh.roster = sh.roster.filter(x => x !== m);
     sh.dead.push({name: RUN.name, base: RUN.char, face: RUN.face, seed: m && m.seed, missions: m ? m.missions : 0, kills: (m ? m.kills : 0) + RUN.stats.kills, where: 'the shelter door', turned: false, mission: sh.missions});
@@ -4051,14 +4062,13 @@ function defenseEnd(won){
     const rooms = []; eachRoom((r, f, s) => rooms.push(r)); const hit = rooms.length ? R.pick(rooms) : null;
     if (hit && hit.lv > 1){ hit.lv--; notes.push(`They got in. The ${ROOMS[hit.t].n.toLowerCase()} is wrecked: down a level.`); }
     notes.push(`${RUN.name} died at the door. They took 3 food before you drove them out.`);
-    if (!sh.roster.length){ const d = drifter(); sh.roster.push(d); notes.push(`${d.name} found the empty shelter, and stayed.`); }
   }
   RUN = null; LV = null; G.report = null; G.toast = notes.join(' '); saveMeta();
 }
 function barTheDoor(){
   const sh = S(), food = Math.min(sh.food, 2), scrap = Math.min(sh.scrap, 4);
   sh.food -= food; sh.scrap -= scrap; saveMeta();
-  G.report = null; G.toast = `You barred the door and waited. They clawed at it all night and got away with ${food} food and ${scrap} scrap from the stores.`;
+  G.report = null; G.toast = `You barred the door and sat in the dark. They clawed at it until dawn, and got away with ${food} food and ${scrap} scrap through the vents.`;
   G.screen = 'shelter'; render();
 }
 
@@ -4121,10 +4131,10 @@ function shelterHTML(){
   const floors = sh.rooms.map((row, f) => {
     if (f >= sh.floors){
       const can = f === sh.floors;
-      return `<div class="sfloor locked">${can ? `<button class="pbtn small dig" data-a="dig" ${sh.scrap >= FLOOR_COST[f] ? '' : 'disabled'}>Dig out floor ${f + 1} · ${FLOOR_COST[f]} scrap</button>` : '<span class="rock">Solid rock</span>'}</div>`;
+      return `<div class="sfloor locked">${can ? `<button class="pbtn small dig" data-a="dig" ${sh.scrap >= FLOOR_COST[f] ? '' : 'disabled'}>Dig deeper · ${FLOOR_COST[f]} scrap</button>` : '<span class="rock">Bedrock. Nothing past here but the dark.</span>'}</div>`;
     }
     return `<div class="sfloor">${row.map((r, s) => {
-      if (!r) return `<button class="sroom empty" data-a="roomTap" data-f="${f}" data-s="${s}"><span>+ Build</span></button>`;
+      if (!r) return `<button class="sroom empty" data-a="roomTap" data-f="${f}" data-s="${s}"><span>+ Clear this space</span></button>`;
       const R0 = ROOMS[r.t], ws = workersIn(f, s), here = r.t === 'bunks' ? sh.roster.filter(m => !m.room).slice(0, 3 * r.lv) : ws;
       const people = here.map((m, k) => dwellerHTML(m, k, r.t === 'bunks', selM && selM.uid === m.uid)).join('');
       const fresh = G.fresh === roomKey(f, s) ? 'built' : '', idle = R0.work && !ws.length ? 'idle' : '';
@@ -4139,19 +4149,19 @@ function shelterHTML(){
   }).join('');
   const roster = sh.roster.map(m => {
     const r = m.room ? roomAt(...m.room.split(':').map(Number)) : null;
-    return `<button class="rmember ${G.selM === m.uid ? 'sel' : ''}" data-a="selMember" data-u="${m.uid}"><img src="${faceURL(m.face)}" alt=""><span class="rn">${esc(m.name.split(' ')[0])}</span><span class="rr">${r ? esc(ROOMS[r.t].n) : 'Resting'}</span></button>`;
+    return `<button class="rmember ${G.selM === m.uid ? 'sel' : ''}" data-a="selMember" data-u="${m.uid}"><img src="${faceURL(m.face)}" alt=""><span class="rn">${esc(m.name.split(' ')[0])}</span><span class="rr">${r ? esc(ROOMS[r.t].n) : 'Off shift'}</span></button>`;
   }).join('');
-  const tip = selM ? `${esc(selM.name)}: tap a room to put them to work there, or tap their room again to let them rest.` : G.toast ? esc(G.toast) : 'Tap a survivor, then a room, to put them to work. Tap a room to build or upgrade it.';
+  const tip = selM ? `${esc(selM.name)} waits for orders. Tap a room to put them on shift there, or their own room to let them rest.` : G.toast ? esc(G.toast) : 'Tap a survivor, then a room, to give them work. Tap a room to build or reinforce it.';
   return `<div class="shelter">
     <div class="shdr"><div class="hdr">THE SHELTER <small>Day ${sh.missions + 1}</small></div>
-      <div class="sres"><span><img src="${spriteURL('i_tools')}" alt="">${sh.scrap} scrap</span><span><img src="${spriteURL('i_can')}" alt="">${sh.food} food${sh.hungry ? ' · hungry' : ''}</span><span><img src="${spriteURL('r_bed')}" alt="">${sh.roster.length}/${capacity()} survivors</span><span>Missions: ${sh.missions}</span></div></div>
+      <div class="sres"><span><img src="${spriteURL('i_tools')}" alt="">${sh.scrap} scrap</span><span><img src="${spriteURL('i_can')}" alt="">${sh.food} food${sh.hungry ? ' · hungry' : ''}</span><span><img src="${spriteURL('r_bed')}" alt="">${sh.roster.length}/${capacity()} alive</span><span>${sh.missions} trip${sh.missions === 1 ? '' : 's'} topside</span></div></div>
     ${surfaceHTML()}
     <div class="shaft"></div>
     ${G.sendoff ? `<div class="trip out"><span class="dw rider"><i style="background-image:url(${walkerURL(G.sendoff.face)})"></i></span></div>` : ''}
     ${G.homecoming ? `<div class="trip in"><span class="dw rider"><i style="background-image:url(${walkerURL(G.homecoming.face)})"></i></span></div>` : ''}
     <div class="sfloors">${floors}</div>
     <div class="sbottom"><div class="sroster">${roster}</div>
-      <div class="sbtns"><button class="pbtn go" data-a="launch">Go out</button><button class="pbtn small" data-a="memorial">Memorial · ${sh.dead.length}</button><button class="pbtn small" data-a="title">Back</button></div></div>
+      <div class="sbtns"><button class="pbtn go" data-a="launch">Send someone topside</button><button class="pbtn small" data-a="memorial">The wall · ${sh.dead.length}</button><button class="pbtn small" data-a="title">Up the ladder</button></div></div>
     <div class="stip">${tip}</div>
     ${shelterPanel()}
   </div>`;
@@ -4160,57 +4170,57 @@ function shelterPanel(){
   const P = G.sp, sh = S(); if (!P) return '';
   let body = '';
   if (P.type === 'build'){
-    body = `<div class="pt">BUILD A ROOM</div><div class="blist">${Object.entries(ROOMS).map(([t, R0]) => `<button class="pbtn small bopt" data-a="build" data-t="${t}" ${sh.scrap >= R0.cost[0] ? '' : 'disabled'}><img src="${spriteURL(R0.icon)}" alt=""><span>${esc(R0.n)}<small>${esc(R0.out(1, 0))}</small></span><b>${R0.cost[0]}</b></button>`).join('')}</div>`;
+    body = `<div class="pt">WHAT GOES HERE?</div><div class="blist">${Object.entries(ROOMS).map(([t, R0]) => `<button class="pbtn small bopt" data-a="build" data-t="${t}" ${sh.scrap >= R0.cost[0] ? '' : 'disabled'}><img src="${spriteURL(R0.icon)}" alt=""><span>${esc(R0.n)}<small>${esc(R0.out(1, 0))}</small></span><b>${R0.cost[0]}</b></button>`).join('')}</div>`;
   } else if (P.type === 'room'){
     const r = roomAt(P.f, P.s), R0 = ROOMS[r.t], ws = workersIn(P.f, P.s);
     body = `<div class="pt">${esc(R0.n.toUpperCase())} ${'★'.repeat(r.lv)}</div><p class="ptext">${esc(R0.out(r.lv, ws.length))}.</p>
-      ${R0.work ? `<p class="ptext small">Workers: ${ws.length ? ws.map(m => esc(m.name)).join(', ') : 'nobody yet'}. Tap a survivor below, then this room, to assign them.</p>` : ''}
-      ${r.lv < 3 ? `<p class="ptext small">Level ${r.lv + 1}: ${esc(R0.out(r.lv + 1, ws.length))}.</p><div class="prow"><button class="pbtn" data-a="upgrade" ${sh.scrap >= R0.cost[r.lv] ? '' : 'disabled'}>Upgrade · ${R0.cost[r.lv]} scrap</button></div>` : '<p class="ptext small">Fully built.</p>'}`;
+      ${R0.work ? `<p class="ptext small">On shift: ${ws.length ? ws.map(m => esc(m.name)).join(', ') : 'nobody. It sits dark'}. Tap a survivor below, then this room, to put them to work.</p>` : ''}
+      ${r.lv < 3 ? `<p class="ptext small">Reinforced, it ${esc(R0.out(r.lv + 1, ws.length).replace(/^./, ch => ch.toLowerCase()))}.</p><div class="prow"><button class="pbtn" data-a="upgrade" ${sh.scrap >= R0.cost[r.lv] ? '' : 'disabled'}>Reinforce · ${R0.cost[r.lv]} scrap</button></div>` : '<p class="ptext small">As good as anything gets down here.</p>'}`;
   } else if (P.type === 'memorial'){
-    body = `<div class="pt">THE WALL</div>${sh.dead.length ? `<div class="mlist">${sh.dead.slice().reverse().map(d => `<div class="mrow"><img src="${faceURL(d.face, 3)}" alt=""><span><b>${esc(d.name)}</b><br>${d.turned ? 'Turned' : 'Died'} at ${esc(d.where)}. ${d.missions} mission${d.missions === 1 ? '' : 's'}, ${d.kills} put down.</span></div>`).join('')}</div>` : '<p class="ptext">No names on the wall yet.</p>'}`;
+    body = `<div class="pt">THE WALL</div>${sh.dead.length ? `<div class="mlist">${sh.dead.slice().reverse().map(d => `<div class="mrow"><img src="${faceURL(d.face, 3)}" alt=""><span><b>${esc(d.name)}</b><br>${d.turned ? 'Turned' : 'Fell'} at ${esc(d.where)}. ${d.missions} trip${d.missions === 1 ? '' : 's'} topside, ${d.kills} of the dead put down.</span></div>`).join('')}</div>` : '<p class="ptext">The wall is bare. Keep it that way.</p>'}`;
   }
-  return `<div class="shade" data-a="spClose"></div><div class="panel box spanel">${body}<div class="prow"><button class="pbtn small" data-a="spClose">Close</button></div></div>`;
+  return `<div class="shade" data-a="spClose"></div><div class="panel box spanel">${body}<div class="prow"><button class="pbtn small" data-a="spClose">Done here</button></div></div>`;
 }
 function launchHTML(){
   const sh = S(), L = G.launch, areas = unlockedAreas();
   const who = sh.roster.map(m => { const c = CHARS[m.base];
-    return `<button class="lpick ${L.uid === m.uid ? 'sel' : ''}" data-a="lWho" data-u="${m.uid}"><img src="${faceURL(m.face)}" alt=""><span><b>${esc(m.name)}</b><small>${m.maxHp - (sh.hungry ? 2 : 0)} health · ${m.missions} missions · ${m.kills} put down</small><em>${esc(c.perk)}</em></span></button>`; }).join('');
+    return `<button class="lpick ${L.uid === m.uid ? 'sel' : ''}" data-a="lWho" data-u="${m.uid}"><img src="${faceURL(m.face)}" alt=""><span><b>${esc(m.name)}</b><small>${m.maxHp - (sh.hungry ? 2 : 0)} health · ${m.missions} trip${m.missions === 1 ? '' : 's'} · ${m.kills} put down</small><em>${esc(c.perk)}</em></span></button>`; }).join('');
   const where = areas.map(a => { const A = AREAS[a], n = sh.cleared[a] || 0;
-    return `<button class="lpick area ${L.area === a ? 'sel' : ''}" data-a="lWhere" data-i="${a}"><img src="${bgURL(A.bg)}" alt=""><span><b>${esc(A.name)}</b><small>${['Close by', 'Further out', 'The end of the road'][A.tier]} · ${n ? `cleared ${n}×` : 'never cleared'}</small><em>${A.final ? 'Hollow Labs: the vaccine, and the end of the story.' : `Boss: ${esc(ZOMBIES[A.boss].n)}`}</em></span></button>`; }).join('');
-  const gear = sh.storage.length ? sh.storage.map((c, k) => `<button class="lgear ${L.take.includes(k) ? 'sel' : ''}" data-a="lTake" data-k="${k}" title="${esc(cardName(c))}"><img src="${spriteURL(cardSprite(c))}" alt=""><span>${esc(cardName(c))}</span></button>`).join('') : '<p class="ptext small">Storage is empty. Whatever comes home in a backpack ends up here.</p>';
-  const extras = [bestLv('armory') ? 'a weapon from the armory' : '', sumRooms('infirmary', r => r.lv) ? 'bandages from the infirmary' : ''].filter(Boolean);
+    return `<button class="lpick area ${L.area === a ? 'sel' : ''}" data-a="lWhere" data-i="${a}"><img src="${bgURL(A.bg)}" alt=""><span><b>${esc(A.name)}</b><small>${['Close to home', 'Further out', 'The end of the road'][A.tier]} · ${n ? `walked ${n}×` : 'nobody has walked it yet'}</small><em>${A.final ? 'The vaccine is down there. So is what made it.' : `Waiting at the end: ${esc(ZOMBIES[A.boss].n)}`}</em></span></button>`; }).join('');
+  const gear = sh.storage.length ? sh.storage.map((c, k) => `<button class="lgear ${L.take.includes(k) ? 'sel' : ''}" data-a="lTake" data-k="${k}" title="${esc(cardName(c))}"><img src="${spriteURL(cardSprite(c))}" alt=""><span>${esc(cardName(c))}</span></button>`).join('') : '<p class="ptext small">The shelves are bare. Whatever comes home in a backpack ends up here.</p>';
+  const extras = [bestLv('armory') ? 'whatever the armory hands them' : '', sumRooms('infirmary', r => r.lv) ? 'bandages from the infirmary' : ''].filter(Boolean);
   const ok = L.uid != null && L.area != null;
-  return `<div class="shade"></div><div class="launch"><div class="hdr">GOING OUT</div>
-    <div class="lcols"><div class="lcol"><div class="lh">Who goes</div>${who}</div><div class="lcol"><div class="lh">Where</div>${where}</div>
-      <div class="lcol"><div class="lh">Take from storage · ${L.take.length}/3</div><div class="lgrid">${gear}</div>
-        <p class="ptext small">${extras.length ? 'They also take ' + extras.join(' and ') + '.' : 'Build an armory and an infirmary to send people out better armed.'}${sh.hungry ? ' The shelter is hungry: 2 less health.' : ''} If they die out there, everything they carry is lost.</p></div></div>
-    <div class="prow"><button class="pbtn" data-a="lGo" ${ok ? '' : 'disabled'}>Head out</button><button class="pbtn small" data-a="shelter">Back</button></div></div>`;
+  return `<div class="shade"></div><div class="launch"><div class="hdr">WHO GOES TOPSIDE?</div>
+    <div class="lcols"><div class="lcol"><div class="lh">Who climbs the ladder</div>${who}</div><div class="lcol"><div class="lh">Where to</div>${where}</div>
+      <div class="lcol"><div class="lh">From the shelves · ${L.take.length} of 3</div><div class="lgrid">${gear}</div>
+        <p class="ptext small">${extras.length ? 'They climb up with ' + extras.join(' and ') + '.' : 'An armory and an infirmary would send them up better than this.'}${sh.hungry ? ' Nobody has eaten properly: 2 less health.' : ''} If they do not come back, neither does anything they carry.</p></div></div>
+    <div class="prow"><button class="pbtn" data-a="lGo" ${ok ? '' : 'disabled'}>${ok ? 'Open the hatch' : 'Choose who, and where'}</button><button class="pbtn small" data-a="shelter">Not today</button></div></div>`;
 }
 function debriefHTML(){
   const R0 = G.report, sh = S();
-  const head = R0.outcome === 'dead' ? 'KILLED IN ACTION' : R0.outcome === 'home' ? 'HOME EARLY' : 'MISSION COMPLETE';
+  const head = R0.outcome === 'dead' ? 'LOST TOPSIDE' : R0.outcome === 'home' ? 'BACK BEFORE DARK' : 'HOME, AND WHOLE';
   const lines = [
-    R0.outcome === 'dead' ? `${esc(R0.name)} did not come back from ${esc(AREAS[R0.area].name)}.${R0.lost.length ? ' Lost with them: ' + esc(R0.lost.join(', ')) + '.' : ''}` : `${esc(R0.name)} made it home from ${esc(AREAS[R0.area].name)} with ${R0.scrap} scrap.`,
+    R0.outcome === 'dead' ? `${esc(R0.name)} did not come back from ${esc(AREAS[R0.area].name)}.${R0.lost.length ? ' Gone with them: ' + esc(R0.lost.join(', ')) + '.' : ''}` : R0.outcome === 'home' ? `${esc(R0.name)} turned back from ${esc(AREAS[R0.area].name)} while they still could, with ${R0.scrap} scrap.` : `${esc(R0.name)} came down the ladder from ${esc(AREAS[R0.area].name)} with ${R0.scrap} scrap and a story they will not tell.`,
     R0.ending ? `The story has an ending: ${esc(ENDINGS[R0.ending].t)}. ${META.endings.length} of ${Object.keys(ENDINGS).length} found. The shelter goes on, and the Long Night is open.` : '',
-    R0.stored.length ? `Into storage: ${esc(R0.stored.join(', '))}.` : '',
-    R0.outcome !== 'dead' && R0.lost.length ? `No room in storage for: ${esc(R0.lost.join(', '))}.` : '',
+    R0.stored.length ? `Onto the shelves: ${esc(R0.stored.join(', '))}.` : '',
+    R0.outcome !== 'dead' && R0.lost.length ? `No shelf space, so these were left by the hatch: ${esc(R0.lost.join(', '))}.` : '',
     ...R0.notes.map(esc),
   ].filter(Boolean);
   return `<div class="shade ${R0.outcome === 'dead' ? 'red' : ''}"></div><div class="debrief">
     <img class="dface" src="${faceURL(R0.face, R0.outcome === 'dead' ? 3 : 0)}" alt="">
     ${bigTitle(head, R0.outcome === 'dead' ? '' : 'green')}
     <div class="dlines">${lines.map(l => `<p>${l}</p>`).join('')}</div>
-    ${R0.attack ? `<div class="dattack">The dead followed ${R0.outcome === 'dead' ? 'the noise' : 'them'} home. ${R0.attack} of them are at the door.</div><div class="prow"><button class="pbtn danger" data-a="siege">Defend the shelter</button></div>`
-      : `<div class="prow"><button class="pbtn" data-a="shelter">Back to the shelter</button></div>`}
+    ${R0.attack ? `<div class="dattack">The dead followed ${R0.outcome === 'dead' ? 'the noise' : 'them'} home. ${R0.attack} of them are scratching at the door.</div><div class="prow"><button class="pbtn danger" data-a="siege">Meet them at the door</button></div>`
+      : fallen() ? `<div class="prow"><button class="pbtn danger" data-a="shelter">Listen to the quiet</button></div>` : `<div class="prow"><button class="pbtn" data-a="shelter">Seal the hatch behind them</button></div>`}
   </div>`;
 }
 function siegeHTML(){
   const sh = S(), n = G.report.attack;
   const who = sh.roster.map(m => `<button class="lpick" data-a="defend" data-u="${m.uid}"><img src="${faceURL(m.face)}" alt=""><span><b>${esc(m.name)}</b><small>${m.maxHp} health · ${m.kills} put down</small><em>${esc(CHARS[m.base].perk)}</em></span></button>`).join('');
   return `<div class="shade red"></div><div class="launch siege"><div class="hdr">${n} AT THE DOOR</div>
-    <p class="ptext">Someone has to go up and meet them. Whoever falls at the door is gone for good, and the dead get in.</p>
+    <p class="ptext">Someone has to climb up and meet them. Whoever falls at the door is gone for good, and the dead get in after them.</p>
     <div class="lcol wide">${who}</div>
-    <div class="prow"><button class="pbtn small" data-a="bar">Bar the door and wait · they take some stores</button></div></div>`;
+    <div class="prow"><button class="pbtn small" data-a="bar">Bar the door and pray · they will take some stores</button></div></div>`;
 }
 
 boot();
