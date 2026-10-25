@@ -99,7 +99,7 @@ b{color:#fff;font-weight:600}
 .locard::after{content:"";position:absolute;inset:0;background:linear-gradient(transparent 40%,rgba(0,0,0,.65))}
 .locname{position:absolute;left:6px;right:6px;top:150px;z-index:2;text-align:center;font-family:var(--f-pixel);font-size:24px;line-height:1.05;color:#fff;text-shadow:3px 0 #000,-3px 0 #000,0 3px #000,0 -3px #000,3px 3px #000,-3px -3px #000,3px -3px #000,-3px 3px #000}
 .loclv{position:absolute;left:0;right:0;top:226px;z-index:2;text-align:center;font-family:var(--f-pixel);font-size:18px;color:#ddd;text-shadow:2px 2px #000,-2px -2px #000,2px -2px #000,-2px 2px #000}
-.msg{position:absolute;left:16px;top:316px;width:212px;height:152px;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 12px;font-size:17px;line-height:1.25;color:#d8d4c8;overflow:hidden}
+.msg{position:absolute;left:16px;top:316px;width:212px;height:238px;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 12px;font-size:17px;line-height:1.25;color:#d8d4c8;overflow:hidden}
 .msg b{font-family:var(--f-pixel);font-size:14px;font-weight:400;color:#fff}
 .portrait{position:absolute;left:16px;top:568px;width:88px;height:136px;border:4px solid var(--frame);border-radius:6px;box-shadow:0 0 0 3px var(--black);background:#1d2024;overflow:hidden}
 .portrait img{width:80px;height:100px}
@@ -610,6 +610,10 @@ b{color:#fff;font-weight:600}
 @keyframes comein{0%{left:1300px;top:44px;transform:scale(.62) scaleX(-1)}36%{left:30px;top:44px;transform:scale(.62) scaleX(-1)}66%{left:30px;top:164px;transform:scaleX(1)}100%{left:300px;top:164px;transform:scaleX(1)}}
 .fallen .mlist{width:620px;max-height:240px}
 .fallen .logo{font-size:44px}
+.chatter{margin:-4px 0 10px;max-width:820px;text-align:center;font-size:17px;color:#8fa890;text-shadow:0 0 6px rgba(120,200,140,.35);animation:static 4s steps(1) infinite}
+@keyframes static{0%,92%,100%{opacity:.85}93%{opacity:.35}95%{opacity:.9}97%{opacity:.5}}
+#msg[data-len="long"]{font-size:14px;line-height:1.2}
+#msg[data-len="tiny"]{font-size:12px;line-height:1.15}
 
 </style>
 <div id="rotate" hidden>Turn your phone sideways for a bigger table.</div>
@@ -1702,65 +1706,65 @@ const NIGHT_AREAS = [0, 1, 3, 2];
 
 // wait: turns until it strikes, shown as red claw marks. A dog's is 1: it bites every turn.
 const ZOMBIES = {
-  walker:   {n: 'Walker', hp: 3, atk: 1, rage: 3, d: 'Slow. Strikes every third turn.'},
-  dog:      {n: 'Zombie Dog', hp: 2, atk: 2, rage: 1, d: 'Bites every single turn. Kill it first.'},
-  crawler:  {n: 'Crawler', hp: 2, atk: 1, rage: 2, pierce: 1, d: 'Goes for the ankles: armor does not stop it.'},
-  bloater:  {n: 'Bloater', hp: 3, atk: 2, rage: 3, explode: 3, d: 'Bursts when it dies, for 3 to every card beside it. Kill it up close and you get the burst too.'},
-  screamer: {n: 'Screamer', hp: 2, atk: 0, rage: 2, scream: 1, d: 'Never attacks. Shrieks instead, and a Walker shambles in.'},
-  soldier:  {n: 'Soldier', hp: 5, atk: 2, rage: 3, armor: 1, d: 'Armor 1: every hit deals 1 less. A rifle ignores it.'},
-  mother:   {n: 'Brood Mother', hp: 6, atk: 1, rage: 3, spawn: 'baby', d: 'Every time she acts, a Biter crawls out into an empty space.'},
-  baby:     {n: 'Biter', hp: 1, atk: 1, rage: 1, d: 'Tiny, fast, and always hungry.'},
-  nurse:    {n: 'Nurse', hp: 3, atk: 1, rage: 2, heal: 2, d: 'Patches up the dead: heals every other zombie 2 when she acts.'},
-  scientist:{n: 'Scientist', hp: 4, atk: 1, rage: 2, infect: 2, d: 'Its scratches also drain 2 vaccine.'},
-  hazmat:   {n: 'Hazmat', hp: 5, atk: 2, rage: 3, armor: 2, d: 'Armor 2.'},
-  butcher:  {n: 'The Butcher', hp: 10, atk: 2, rage: 2, boss: 1, d: 'Boss. He has the key to the way out. At half health he enrages: hits harder, and calls two Walkers.'},
-  alpha:    {n: 'The Alpha', hp: 12, atk: 2, rage: 1, boss: 1, howl: 3, d: 'Boss. Bites every turn, and every third turn it howls up another Zombie Dog. At half health it calls two more and its hide hardens.'},
-  drowned:  {n: 'Drowned', hp: 4, atk: 1, rage: 2, wet: 1, d: 'Waterlogged: fire will not catch on it.'},
-  dockhand: {n: 'Dockhand', hp: 4, atk: 2, rage: 3, hook: 1, d: 'Hooks: its hits also tear a card out of your backpack.'},
-  gull:     {n: 'Gull', hp: 1, atk: 1, rage: 1, flock: 1, d: 'Bites every turn. When one falls, another may land.'},
-  diver:    {n: 'The Diver', hp: 11, atk: 2, rage: 2, armor: 2, boss: 1, d: 'Boss. A dead man in a brass diving suit. Armor 2. At half health the helmet cracks: no armor, but it strikes every turn.'},
-  zero:     {n: 'Patient Zero', hp: 20, atk: 2, rage: 2, regen: 1, infect: 2, boss: 1, d: 'Boss. Heals 1 every turn. Its attacks drain 2 vaccine. At half health it mutates: hits harder, heals 2 a turn, and a Scientist rises.'},
-  lurker:   {n: 'Lurker', hp: 3, atk: 2, rage: 3, ambush: 1, d: 'Waits face down. Turn it over and it strikes that same turn.'},
-  spitter:  {n: 'Spitter', hp: 3, atk: 1, rage: 2, pierce: 1, infect: 1, d: 'Spits: armor does not stop it, and every hit drains 1 vaccine.'},
-  riot:     {n: 'Riot Guard', hp: 5, atk: 1, rage: 3, armor: 1, guard: 1, d: 'Armor 1. Shields its neighbors: zombies beside it take 1 less damage.'},
+  walker:   {n: 'Walker', hp: 3, atk: 1, rage: 3, d: 'Slow, and in no hurry. It has all the time you do not. Lunges every third turn.'},
+  dog:      {n: 'Zombie Dog', hp: 2, atk: 2, rage: 1, d: 'Somebody\'s good boy, once. Bites every single turn. Kill it first.'},
+  crawler:  {n: 'Crawler', hp: 2, atk: 1, rage: 2, pierce: 1, d: 'Drags itself through the dirt and goes for your ankles. Armor does not help.'},
+  bloater:  {n: 'Bloater', hp: 3, atk: 2, rage: 3, explode: 3, d: 'Swollen tight with rot. When it dies it bursts: 3 to everything beside it, and to you if you were holding the blade.'},
+  screamer: {n: 'Screamer', hp: 2, atk: 0, rage: 2, scream: 1, d: 'Never bites. It screams instead, and something always answers: a Walker shambles in.'},
+  soldier:  {n: 'Soldier', hp: 5, atk: 2, rage: 3, armor: 1, d: 'Still in his vest, still on duty. Armor 1: every hit lands 1 lighter. A rifle punches straight through.'},
+  mother:   {n: 'Brood Mother', hp: 6, atk: 1, rage: 3, spawn: 'baby', d: 'Heavy with something that moves. Each time she stirs, a Biter crawls out of her into an empty space.'},
+  baby:     {n: 'Biter', hp: 1, atk: 1, rage: 1, d: 'Small, quick, and always, always hungry.'},
+  nurse:    {n: 'Nurse', hp: 3, atk: 1, rage: 2, heal: 2, d: 'Still doing her rounds. When she moves, she stitches every other zombie up for 2.'},
+  scientist:{n: 'Scientist', hp: 4, atk: 1, rage: 2, infect: 2, d: 'It knows exactly what it made. Its scratches carry the bloom straight in: 2 vaccine gone with every hit.'},
+  hazmat:   {n: 'Hazmat', hp: 5, atk: 2, rage: 3, armor: 2, d: 'Sealed in a suit that never helped. Armor 2.'},
+  butcher:  {n: 'The Butcher', hp: 10, atk: 2, rage: 2, boss: 1, d: 'Boss. The key to the way out hangs from his apron. At half health he roars: harder hits, and two Walkers come running.'},
+  alpha:    {n: 'The Alpha', hp: 12, atk: 2, rage: 1, boss: 1, howl: 3, d: 'Boss. Leads the pack and bites every turn. Every third turn it howls in another dog. At half health: two more dogs, and a hide like armor.'},
+  drowned:  {n: 'Drowned', hp: 4, atk: 1, rage: 2, wet: 1, d: 'Weeks on the bottom of the bay. Waterlogged: fire will not catch on it.'},
+  dockhand: {n: 'Dockhand', hp: 4, atk: 2, rage: 3, hook: 1, d: 'Still swinging the cargo hook. Its hits tear a card out of your backpack.'},
+  gull:     {n: 'Gull', hp: 1, atk: 1, rage: 1, flock: 1, d: 'Bites every turn. Where there is one gull there are more: when it falls, another may land.'},
+  diver:    {n: 'The Diver', hp: 11, atk: 2, rage: 2, armor: 2, boss: 1, d: 'Boss. A dead man in a brass suit, up out of the bay. Armor 2. Crack the helmet at half health: no armor, but it strikes every turn.'},
+  zero:     {n: 'Patient Zero', hp: 20, atk: 2, rage: 2, regen: 1, infect: 2, boss: 1, d: 'Boss. The night guard, where it all began. Heals 1 a turn; its hits drain 2 vaccine. At half health it splits open: harder hits, heals 2, and a Scientist rises.'},
+  lurker:   {n: 'Lurker', hp: 3, atk: 2, rage: 3, ambush: 1, d: 'It has been lying still, waiting for a hand to turn it over. It strikes the same turn you find it.'},
+  spitter:  {n: 'Spitter', hp: 3, atk: 1, rage: 2, pierce: 1, infect: 1, d: 'It spits the bloom from across the room. Armor does not stop it, and every hit drains 1 vaccine.'},
+  riot:     {n: 'Riot Guard', hp: 5, atk: 1, rage: 3, armor: 1, guard: 1, d: 'The riot shield is still strapped on. Armor 1, and it shields its neighbours: zombies beside it take 1 less.'},
 };
 const WEAPONS = {
   fists:   {n: 'Fists', dmg: 2, uses: Infinity, kind: 'melee', d: 'Always with you. Never enough.'},
-  bottle:  {n: 'Broken Bottle', dmg: 2, uses: 2, kind: 'melee'},
-  knife:   {n: 'Kitchen Knife', dmg: 2, uses: 4, kind: 'melee'},
-  bat:     {n: 'Ball Bat', dmg: 3, uses: 3, kind: 'melee'},
-  spiked:  {n: 'Spiked Bat', dmg: 4, uses: 3, kind: 'melee'},
-  crowbar: {n: 'Crowbar', dmg: 3, uses: 4, kind: 'melee', tool: 1, d: 'Also pries open lockers and smashes alarms.'},
-  machete: {n: 'Machete', dmg: 4, uses: 4, kind: 'melee'},
-  axe:     {n: 'Fire Axe', dmg: 5, uses: 3, kind: 'melee'},
-  chainsaw:{n: 'Chainsaw', dmg: 7, uses: 4, kind: 'melee', noise: 2, d: 'Loud enough to wake the street.'},
-  pistol:  {n: 'Pistol', dmg: 3, uses: 3, kind: 'gun', ammo: 'light', noise: 1},
-  revolver:{n: 'Revolver', dmg: 5, uses: 2, kind: 'gun', ammo: 'light', noise: 1},
-  shotgun: {n: 'Shotgun', dmg: 4, uses: 2, kind: 'gun', ammo: 'shell', noise: 2, spread: 2, d: 'Also hits every zombie beside the target for 2.'},
-  rifle:   {n: 'Hunting Rifle', dmg: 6, uses: 2, kind: 'gun', ammo: 'rifle', noise: 1, pierce: 1, d: 'Ignores armor.'},
-  carbine: {n: 'Carbine', dmg: 2, uses: 5, kind: 'gun', ammo: 'rifle', noise: 1, shots: 2, d: 'Fires twice per pull.'},
-  arcgun:  {n: 'Arc Gun', dmg: 4, uses: 3, kind: 'gun', ammo: 'cell', noise: 0, chain: 1, d: 'Silent. Arcs to every zombie beside the target.'},
+  bottle:  {n: 'Broken Bottle', dmg: 2, uses: 2, kind: 'melee', d: 'Jagged, and it will not last. Two good stabs in it, maybe.'},
+  knife:   {n: 'Kitchen Knife', dmg: 2, uses: 4, kind: 'melee', d: 'Out of somebody\'s kitchen drawer. It has cut worse than onions now.'},
+  bat:     {n: 'Ball Bat', dmg: 3, uses: 3, kind: 'melee', d: 'Little League, signed by the whole team. Nobody is coming back for it.'},
+  spiked:  {n: 'Spiked Bat', dmg: 4, uses: 3, kind: 'melee', d: 'Somebody drove nails through the business end and meant it.'},
+  crowbar: {n: 'Crowbar', dmg: 3, uses: 4, kind: 'melee', tool: 1, d: 'Heavy, honest, and good for more than heads: it pries open lockers and smashes alarms.'},
+  machete: {n: 'Machete', dmg: 4, uses: 4, kind: 'melee', d: 'Made for clearing brush. Works on worse.'},
+  axe:     {n: 'Fire Axe', dmg: 5, uses: 3, kind: 'melee', d: 'Pulled from behind the glass. In case of emergency.'},
+  chainsaw:{n: 'Chainsaw', dmg: 7, uses: 4, kind: 'melee', noise: 2, d: 'Loud enough to wake the whole street, and it does.'},
+  pistol:  {n: 'Pistol', dmg: 3, uses: 3, kind: 'gun', ammo: 'light', noise: 1, d: 'Half the town owned one. It did not save half the town.'},
+  revolver:{n: 'Revolver', dmg: 5, uses: 2, kind: 'gun', ammo: 'light', noise: 1, d: 'Old, heavy, and it does not argue.'},
+  shotgun: {n: 'Shotgun', dmg: 4, uses: 2, kind: 'gun', ammo: 'shell', noise: 2, spread: 2, d: 'Pump-action. Every zombie beside the target catches 2 as well.'},
+  rifle:   {n: 'Hunting Rifle', dmg: 6, uses: 2, kind: 'gun', ammo: 'rifle', noise: 1, pierce: 1, d: 'Scoped for deer. Goes straight through armor.'},
+  carbine: {n: 'Carbine', dmg: 2, uses: 5, kind: 'gun', ammo: 'rifle', noise: 1, shots: 2, d: 'Two rounds every time you squeeze.'},
+  arcgun:  {n: 'Arc Gun', dmg: 4, uses: 3, kind: 'gun', ammo: 'cell', noise: 0, chain: 1, d: 'A lab prototype that hums in your hands. Silent, and the arc jumps to every zombie beside the target.'},
 };
 // Elites: any of the ordinary dead can turn up with one of these, more often the deeper you go.
 const ELITES = {
-  armored:  {n: 'Armored', d: 'Armored: +2 armor.'},
-  fast:     {n: 'Fast', d: 'Fast: strikes a turn sooner.'},
-  brute:    {n: 'Brute', d: 'Brute: 3 more health, and hits 1 harder.'},
-  burning:  {n: 'Burning', d: 'Burning: hitting it up close burns you for 1.'},
-  volatile: {n: 'Volatile', d: 'Volatile: bursts when it dies, 2 to everything beside it. You too, if it was your blade.'},
-  rotten:   {n: 'Rotten', d: 'Rotten: its hits drain 1 vaccine as well.'},
-  undying:  {n: 'Undying', d: 'Undying: heals 1 every turn.'},
+  armored:  {n: 'Armored', d: 'Armored: wearing somebody else\'s riot gear. +2 armor.'},
+  fast:     {n: 'Fast', d: 'Fast: it died running and never stopped. Strikes a turn sooner.'},
+  brute:    {n: 'Brute', d: 'Brute: big in life, bigger now. 3 more health, and it hits 1 harder.'},
+  burning:  {n: 'Burning', d: 'Burning: on fire and does not care. Hit it up close and it burns you for 1.'},
+  volatile: {n: 'Volatile', d: 'Volatile: swollen to splitting. Bursts for 2 when it dies, blade-wielder included.'},
+  rotten:   {n: 'Rotten', d: 'Rotten: falling apart and thick with the bloom. Its hits drain 1 vaccine as well.'},
+  undying:  {n: 'Undying', d: 'Undying: it will not stay down. Heals 1 every turn.'},
 };
 // Quirks: about half the weapons you find are not quite like the others.
 const TRAITS = {
-  sharp:  {n: 'Sharp', for: 'melee', d: 'Sharp: +1 damage.'},
-  heavy:  {n: 'Heavy', for: 'melee', d: 'Heavy: +2 damage, one use fewer.'},
-  sturdy: {n: 'Sturdy', for: 'melee', d: 'Sturdy: lasts two uses longer.'},
-  rusty:  {n: 'Rusty', for: 'melee', d: 'Rusty: 1 less damage.'},
-  brutal: {n: 'Brutal', for: 'melee', d: 'Brutal: whatever it hits and does not kill cannot claw back.'},
-  lucky:  {n: 'Lucky', for: 'any', d: 'Lucky: one time in three, using it costs nothing.'},
-  hot:    {n: 'Hot-loaded', for: 'gun', d: 'Hot-loaded: +1 damage.'},
-  quiet:  {n: 'Quiet', for: 'gun', d: 'Quiet: makes no noise.'},
+  sharp:  {n: 'Sharp', for: 'melee', d: 'Sharp: somebody kept an edge on it. +1 damage.'},
+  heavy:  {n: 'Heavy', for: 'melee', d: 'Heavy: hits like a truck and wears out faster. +2 damage, one use fewer.'},
+  sturdy: {n: 'Sturdy', for: 'melee', d: 'Sturdy: built to outlast you. Two more uses before it breaks.'},
+  rusty:  {n: 'Rusty', for: 'melee', d: 'Rusty: it has seen better days. 1 less damage.'},
+  brutal: {n: 'Brutal', for: 'melee', d: 'Brutal: anything it hits and does not kill is too stunned to claw back.'},
+  lucky:  {n: 'Lucky', for: 'any', d: 'Lucky: it never seems to wear out. One time in three, using it costs nothing.'},
+  hot:    {n: 'Hot-loaded', for: 'gun', d: 'Hot-loaded: somebody packed these rounds angry. +1 damage.'},
+  quiet:  {n: 'Quiet', for: 'gun', d: 'Quiet: fitted with a can. Makes no noise at all.'},
 };
 // Gun mods, fitted at a shelter's workbench. One per gun.
 const MODS = {
@@ -1791,10 +1795,10 @@ function wstat(card){
 }
 // Twists: some boards come with a problem of their own.
 const TWISTS = {
-  horde: {n: 'Horde', d: 'They keep coming: a Walker shambles in every 4 turns.'},
-  drop:  {n: 'Supply drop', d: 'A supply drop came down in the middle of it all. Get to it.'},
-  fire:  {n: 'Fire', d: 'The place is burning. Every turn the fire spreads to another card, and whatever it touches burns.'},
-  fog:   {n: 'Fog', d: 'Thick fog. You cannot see how soon the dead will strike.'},
+  horde: {n: 'Horde', d: 'They keep coming out of the dark. A Walker shambles in every 4 turns.'},
+  drop:  {n: 'Supply drop', d: 'A crate came down on a parachute, right in the middle of it all. Get to it first.'},
+  fire:  {n: 'Fire', d: 'The place is on fire. Every turn it spreads to another card, and whatever it touches burns.'},
+  fog:   {n: 'Fog', d: 'Fog so thick you can taste it. You cannot see how soon the dead will strike.'},
 };
 // The camp: people you pull out of the dead zone settle there, and what they know becomes yours on every run.
 const SURVIVORS = {
@@ -1816,33 +1820,33 @@ const AMMO_NAMES = {light: 'Pistol rounds', shell: 'Shotgun shells', rifle: 'Rif
 const ITEMS = {
   food:      {n: 'Food', use: 'self', label: 'FOOD'},
   antidote:  {n: 'Antidote', use: 'self', label: 'ANTIDOTE'},
-  medkit:    {n: 'Medkit', use: 'self', heal: 6, label: 'MEDKIT', d: 'Heals 6.'},
-  bandage:   {n: 'Bandage', use: 'self', heal: 2, label: 'BANDAGE', d: 'Heals 2.'},
-  stun:      {n: 'Stun Shot', use: 'zombie', label: 'STUNNING', d: 'Freezes a zombie for 3 turns. Frozen zombies do not strike back.'},
-  grenade:   {n: 'Grenade', use: 'zombie', label: 'GRENADE', d: '4 damage to a card and every card beside it. Blows face-down cards open, for free.'},
-  molotov:   {n: 'Molotov', use: 'zombie', label: 'MOLOTOV', d: '2 damage to a zombie and the ones beside it, and sets them burning for 2 more turns.'},
-  trap:      {n: 'Bear Trap', use: 'zombie', label: 'TRAP', d: 'Snap it on a zombie: 2 damage and it is stuck for 2 turns.'},
-  binoculars:{n: 'Binoculars', use: 'self', label: 'BINOCULARS', d: 'Peek at 3 face-down cards without turning them.'},
-  lantern:   {n: 'Lantern', use: 'self', label: 'LANTERN', d: 'Shows you where the way out is, and peeks at 2 more cards.'},
-  tools:     {n: 'Toolbox', use: 'passive', label: 'TOOLBOX', d: 'Works on its own: disarms traps you turn over, silences alarms, opens lockers.'},
-  vest:      {n: 'Kevlar Vest', use: 'self', armor: 3, label: 'VEST', d: '+3 armor. Armor soaks hits until it is used up.'},
-  helmet:    {n: 'Helmet', use: 'self', armor: 2, label: 'HELMET', d: '+2 armor.'},
-  pack:      {n: 'Big Backpack', use: 'self', label: 'BACKPACK', d: 'Three more backpack slots.'},
+  medkit:    {n: 'Medkit', use: 'self', heal: 6, label: 'MEDKIT', d: 'Gauze, tape, a suture kit and a prayer. Heals 6.'},
+  bandage:   {n: 'Bandage', use: 'self', heal: 2, label: 'BANDAGE', d: 'A clean strip of cloth. Clean enough. Heals 2.'},
+  stun:      {n: 'Stun Shot', use: 'zombie', label: 'STUNNING', d: 'A dart of something very cold. Freezes a zombie for 3 turns, and frozen things cannot hit back.'},
+  grenade:   {n: 'Grenade', use: 'zombie', label: 'GRENADE', d: 'Pull the pin and count. 4 to a card and everything beside it, and it blows face-down cards open for free.'},
+  molotov:   {n: 'Molotov', use: 'zombie', label: 'MOLOTOV', d: 'A bottle, a rag, and a bad idea. 2 to a zombie and those beside it, and they keep burning for 2 more turns.'},
+  trap:      {n: 'Bear Trap', use: 'zombie', label: 'TRAP', d: 'Snap it on a zombie: 2 damage, and it is going nowhere for 2 turns.'},
+  binoculars:{n: 'Binoculars', use: 'self', label: 'BINOCULARS', d: 'Look before you leap. See what is under 3 face-down cards without turning them.'},
+  lantern:   {n: 'Lantern', use: 'self', label: 'LANTERN', d: 'A little light goes a long way. Shows you the way out, and 2 more cards besides.'},
+  tools:     {n: 'Toolbox', use: 'passive', label: 'TOOLBOX', d: 'Works on its own, as long as it lasts: disarms traps you turn over, silences alarms, opens lockers.'},
+  vest:      {n: 'Kevlar Vest', use: 'self', armor: 3, label: 'VEST', d: 'Police issue, one bullet hole. +3 armor: it soaks hits until it is used up.'},
+  helmet:    {n: 'Helmet', use: 'self', armor: 2, label: 'HELMET', d: 'Dented, but it still fits. +2 armor.'},
+  pack:      {n: 'Big Backpack', use: 'self', label: 'BACKPACK', d: 'A proper hiking pack with all its straps. Three more backpack slots.'},
   ammo:      {n: 'Ammo', use: 'gun', label: 'AMMO'},
 };
 const HAZARDS = {
-  trap:   {n: 'Bear Trap', d: 'Snaps when you turn it over: 2 damage. A toolbox disarms it, and then it is yours.'},
-  alarm:  {n: 'Car Alarm', d: 'While it rings, a Walker arrives every third turn. Smash it, or silence it with a toolbox.'},
-  barrel: {n: 'Fuel Drum', d: 'Hit it and it blows: 4 damage to everything beside it. Shoot it from range or you get burned too.'},
-  spores: {n: 'Spore Bloom', d: 'Breathed it in: costs 2 vaccine.'},
+  trap:   {n: 'Bear Trap', d: 'Somebody set it and forgot it. It snaps when you turn it over: 2 damage. A toolbox disarms it, and then it is yours.'},
+  alarm:  {n: 'Car Alarm', d: 'It will not stop. While it screams, a Walker comes to see every third turn. Smash it, or cut the wires with a toolbox.'},
+  barrel: {n: 'Fuel Drum', d: 'Half full and leaking. Hit it and it blows: 4 to everything beside it. Shoot it from range, or you get burned too.'},
+  spores: {n: 'Spore Bloom', d: 'A soft yellow bloom, almost pretty. Turn it over and you breathe it in: 2 vaccine gone.'},
 };
 const LOCS = {
-  pharmacy: {n: 'Pharmacy', d: 'Raid the shelves: take one.'},
-  store:    {n: 'Corner Store', d: 'The owner trades: swap one of your cards for one of theirs.'},
-  police:   {n: 'Police Cruiser', d: 'The trunk is open: take one.'},
-  locker:   {n: 'Locker', d: 'Locked. A toolbox or a crowbar gets it open, and you can take everything inside.'},
-  safehouse:{n: 'Safehouse', d: 'Rest for a while, or search the place.'},
-  gas:      {n: 'Gas Station', d: 'Raid the counter: take one.'},
+  pharmacy: {n: 'Pharmacy', d: 'Somebody got here first. Not thoroughly: take one thing.'},
+  store:    {n: 'Corner Store', d: 'The owner is still here, shotgun across the counter. He will trade one of yours for one of his. He will not be robbed.'},
+  police:   {n: 'Police Cruiser', d: 'Doors open, lights dead, trunk popped. Take one thing.'},
+  locker:   {n: 'Locker', d: 'Locked tight. A toolbox or a crowbar gets it open, and then everything inside is yours.'},
+  safehouse:{n: 'Safehouse', d: 'Somebody boarded this room up properly. Sleep a while, or go through what they left.'},
+  gas:      {n: 'Gas Station', d: 'Jerky, batteries, and a register nobody wanted. Take one thing.'},
 };
 const CHARS = {
   jonah:  {n: 'Jonah Pike', role: 'Warehouse loader', hp: 10, need: 0,
@@ -1886,24 +1890,26 @@ const PAGES = [
   {t: 'The last memo', b: '"If the sample leaves Hollow Labs, there is a chance. That is all any of us ever had."'},
 ];
 const LINES = {
-  zombie: ['Not today.', 'Another one.', 'Stay down. Stay down.', 'It saw me.', 'Oh, come on.'],
-  dog: ['Good dog. Good... no.', 'Dog! Kill it fast.'],
-  boss: ['That one is different.', 'Big. Angry. Between me and the door.'],
-  food: ['Still sealed. Thank God.', 'Dinner.', 'Calories are calories.'],
-  antidote: ['A dose. Hours more.', 'Antidote. Keep it close.'],
-  weapon: ['That will do.', 'Better than my fists.', 'Heavy. Good.'],
-  item: ['Useful.', 'Could come in handy.', 'Into the pocket.'],
-  exit: ['The way out. Not yet, maybe.', 'There is the door.'],
-  empty: ['Nothing. Just nothing.'],
-  low: ['My hands are shaking.', 'I can feel it in my veins.'],
+  zombie: ['Not today.', 'Another one.', 'Stay down. Stay down.', 'It saw me.', 'Oh, come on.', 'I knew you. I think I knew you.', 'Easy. Easy now.', 'Of course.', 'Just one more. Always one more.', 'There you are.'],
+  dog: ['Good dog. Good... no.', 'Dog! Kill it fast.', 'Not the dogs. Anything but the dogs.', 'Somebody\'s collar, still on.'],
+  boss: ['That one is different.', 'Big. Angry. Between me and the door.', 'So that is what has been eating everyone.', 'Okay. Okay. Breathe.'],
+  food: ['Still sealed. Thank God.', 'Dinner.', 'Calories are calories.', 'Best-before last month. It will do.', 'Do not think about it. Just eat.'],
+  antidote: ['A dose. Hours more.', 'Antidote. Keep it close.', 'Cold, blue, and beautiful.', 'Another day, in a needle.'],
+  weapon: ['That will do.', 'Better than my fists.', 'Heavy. Good.', 'Now we are talking.', 'Something to hold onto.'],
+  item: ['Useful.', 'Could come in handy.', 'Into the pocket.', 'Somebody packed this for a reason.', 'Mine now.'],
+  exit: ['The way out. Not yet, maybe.', 'There is the door.', 'Daylight. Or what passes for it.'],
+  empty: ['Nothing. Just nothing.', 'Dust and old blood.'],
+  low: ['My hands are shaking.', 'I can feel it in my veins.', 'Everything smells sweet. That is bad.', 'Need a dose. Need a dose now.'],
 };
+// What you might think as you step onto a new board.
+const OPENERS = ['Quiet. Too quiet.', 'Every card costs a dose. Choose well.', 'Somewhere under these is the way out.', 'Smells like rain and rot.', 'Breathe. Then turn one over.', 'Nothing moving. Yet.', 'Stay low. Stay quiet. Stay alive.', 'Somebody made a stand here. It did not go well.', 'Count your doses. Then count them again.', 'The sweet smell is stronger here.'];
 
 // ---------------------------------------------------------------- state
 let META = Object.assign({muted: false, music: true, voice: true, pages: [], salvage: 0, survivors: [], ups: [], endings: [], wins: 0, runs: 0, best: 0, bestNight: 0, nightOpen: false}, store.get(META_KEY) || {});
 const saveMeta = () => store.set(META_KEY, META);
 let RUN = null, LV = null, UID = 1;
 const G = {screen: 'title', busy: false, panel: null, msg: '', tip: null, ghosts: [], headless: false, intro: null, end: null};
-const say = (t) => { G.msg = t; const el = document.getElementById('msg'); if (el && !G.tip) el.innerHTML = `<div>${esc(t)}</div>`; };
+const say = (t) => { G.msg = t; const el = document.getElementById('msg'); if (el && !G.tip){ el.innerHTML = `<div>${esc(t)}</div>`; fitMsg(el); } };
 const sayLine = k => say(R.pick(LINES[k]));
 
 function mkZombie(type){
@@ -2062,13 +2068,13 @@ function beginLevel(){
   RUN.dodge = RUN.mode === 'night'; RUN.dodging = false; RUN.sel = null;
   G.screen = 'play'; G.panel = null; G.ghosts = [];
   LV.dealT = now(); G.curtain = {t: now(), title: LV.boss ? ZOMBIES[AREAS[RUN.area].boss].n.toUpperCase() : (node ? stopName(node) : AREAS[RUN.area].name).toUpperCase(), sub: levelLabel() + (LV.twist ? ' · ' + TWISTS[LV.twist].n.toUpperCase() : '')}; sfx('deal');
-  if (G.firstTip){ say(G.firstTip); G.firstTip = null; } else say(LV.boss ? R.pick(LINES.boss) : LV.twist ? `${TWISTS[LV.twist].n}. ${TWISTS[LV.twist].d}` : RUN.flags && RUN.flags.dog && LV.cells.some(c => c && c.peek) ? 'The dog growls at one of the cards. Good dog.' : levelLabel() + '. Turn carefully.');
+  if (G.firstTip){ say(G.firstTip); G.firstTip = null; } else say(LV.boss ? R.pick(LINES.boss) : LV.twist ? `${TWISTS[LV.twist].n}. ${TWISTS[LV.twist].d}` : RUN.flags && RUN.flags.dog && LV.cells.some(c => c && c.peek) ? 'The dog growls at one of the cards. Good dog.' : R.pick(OPENERS));
   save(); render();
 }
 function enterBonus(){
   LV = genLevel({bonus: true});
   LV.dealT = now(); G.curtain = {t: now(), title: 'THE CELLAR', sub: levelLabel()}; sfx('deal');
-  G.panel = null; say('A cellar. Somebody stocked it, once.');
+  G.panel = null; say('A cellar. Somebody stocked it, once, and never came back down.');
   save(); render();
 }
 function nextLevel(skip = 0){
@@ -2096,7 +2102,7 @@ function nextLevel(skip = 0){
 function levelLabel(){
   if (RUN.mode === 'night') return `Night ${RUN.depth + 1}`;
   if (RUN.defense) return 'At the door';
-  return `${tier() + 1} - ${RUN.level}${LV && LV.bonus ? '.5' : ''}`;
+  return LV && LV.bonus ? 'The cellar' : `Stop ${RUN.level} of ${LEVELS}`;
 }
 function save(){
   if (!RUN || G.headless) return;
@@ -2216,9 +2222,9 @@ const EVENTS = {
     b: 'A kid on a bicycle, circling the intersection like nothing happened. He says he knows a way through the yards.',
     opts: [
       {l: 'Follow him', hint: 'the next board is a quiet one', go(){ RUN.nextMod = 'quiet'; EV.note('Next board: small and quiet'); return 'follow'; }},
-      {l: 'Give him food', hint: 'lose a food, get a toolbox', need: isFood, go(){ EV.lose(isFood); EV.give(mkItem('tools')); if (!META.survivors.includes('toby')){ META.survivors.push('toby'); saveMeta(); EV.note('Toby heads for your camp'); } return 'fed'; }},
+      {l: 'Give him food', hint: 'lose a food, get a toolbox', need: isFood, go(){ EV.lose(isFood); EV.give(mkItem('tools')); const sh = META.shelter; if (sh && !sh.joined.includes('toby') && sh.roster.length < capacity()){ sh.joined.push('toby'); sh.roster.push(member('toby')); saveMeta(); EV.note('Toby heads for the shelter'); } return 'fed'; }},
       {l: 'Send him home', go: () => 'home'}],
-    out: {follow: 'Fences, gardens, a dry pool. He knows every gap. Then he is gone, as fast as he came.', fed: 'He eats it on the spot, and hands you his dad\'s toolbox. He says Dad will not mind. You tell him where your camp is.', home: 'He laughs. Home, he says. Good one.'}},
+    out: {follow: 'Fences, gardens, a dry pool. He knows every gap. Then he is gone, as fast as he came.', fed: 'He eats it on the spot, and hands you his dad\'s toolbox. He says Dad will not mind. You tell him how to find the hatch.', home: 'He laughs. Home, he says. Good one.'}},
   keys: {area: [0, 1, 3], art: 'x_car', t: 'The car',
     b: 'A sedan with a quarter tank, and the keys still in it. The driver is in the back seat. He is not going anywhere.',
     opts: [
@@ -2550,7 +2556,7 @@ async function endTurn(){
   G.busy = true;
   LV.turn++; RUN.stats.turns++;
   if (RUN.vac <= 0){
-    say('No vaccine left. The infection burns.');
+    say('The syringe is dry. The bloom is in the blood now, and it burns.');
     hurt(1, {pierce: true}); render(); await wait(300);
     if (dead()){ await wait(400); gameOver(); return; }
   }
@@ -2580,6 +2586,7 @@ async function endTurn(){
   LV.cells.forEach(c => { if (c && c.fresh) c.fresh = false; });
   if (doorHeld()){ await holdDoor(); return; }
   if (RUN.vac > 0 && RUN.vac <= 2 && R.chance(.3)) sayLine('low');
+  else if (RUN.hp > 0 && RUN.hp <= 3 && R.chance(.25)) say(R.pick(['Blood in my mouth. Keep going.', 'Not like this. Not here.', 'One more. I can take one more.']));
   G.busy = false;
   save(); render();
 }
@@ -2621,11 +2628,11 @@ function flip(i){
     case 'weapon': sayLine('weapon'); break;
     case 'item': sayLine(c.id === 'food' ? 'food' : c.id === 'antidote' ? 'antidote' : 'item'); break;
     case 'exit': sayLine('exit'); break;
-    case 'page': say('A page. Someone wrote this down for a reason.'); break;
+    case 'page': say('Paper. Somebody wrote this down for a reason.'); break;
     case 'loc': say(`${LOCS[c.id].n}. ${LOCS[c.id].d}`); break;
-    case 'car': say('A car with the keys gone. Maybe it can be hotwired.'); break;
-    case 'hatch': say('A hatch in the floor.'); break;
-    case 'survivor': say(`Someone alive. ${SURVIVORS[c.id].n}.`); break;
+    case 'car': say('A car, keys gone. The wiring might still be good.'); break;
+    case 'hatch': say('A hatch in the floor. Stairs, going down.'); break;
+    case 'survivor': say(`Someone alive. Actually alive. ${SURVIVORS[c.id].n}.`); break;
     case 'hazard':
       if (c.id === 'trap'){
         if (useTool()){ LV.cells[i] = mkItem('trap'); LV.cells[i].up = true; LV.cells[i].flipAt = now(); say('A bear trap. The toolbox makes short work of it. It is yours now.'); sfx('build'); }
@@ -2656,7 +2663,7 @@ function take(i){
   const where = stow(c);
   if (!where){ say('Hands full, pack full. Use something, or toss it.'); sfx('deny'); return; }
   LV.cells[i] = null; sfx('pick');
-  say(where === 'pack' ? `${cardName(c)}, into the pack.` : `${cardName(c)}. Mine now.`);
+  say(where === 'pack' ? `${cardName(c)}, into the pack.` : c.kind === 'weapon' ? R.pick(LINES.weapon) + ` ${cardName(c)}.` : `${cardName(c)}. Mine now.`);
   save(); render();
 }
 function rescue(i){
@@ -2687,7 +2694,7 @@ function clickCell(i){
 async function hitAlarm(i){
   const c = LV.cells[i];
   G.busy = true;
-  if (useTool()){ LV.cells[i] = null; LV.alarm = 0; say('Two wires snipped. Silence.'); sfx('build'); await endTurn(); return; }
+  if (useTool()){ LV.cells[i] = null; LV.alarm = 0; say('Two wires snipped. Blessed silence.'); sfx('build'); await endTurn(); return; }
   const slot = RUN.wsel, card = slot != null ? RUN.hand[slot] : null, w = card ? WEAPONS[card.id] : WEAPONS.fists;
   if (w.kind === 'gun'){ if (card.uses <= 0){ G.busy = false; say('Empty.'); return; } card.uses--; LV.noise += w.noise; muzzle(); sfx('gun'); c.hp = 0; }
   else { c.hp -= w.tool ? 2 : w.dmg; wear(slot); sfx('swing'); }
@@ -2745,7 +2752,7 @@ function genOffer(id){
   return {cards, picks, mode};
 }
 function tryExit(){
-  if (LV.locked){ say('Chained shut. The boss has the key.'); sfx('deny'); return; }
+  if (LV.locked){ say('Chained shut. The key is on the big one.'); sfx('deny'); return; }
   const hidden = LV.cells.filter(c => c && !c.up).length;
   const leave = () => { G.panel = null; sfx('exit'); nextLevel(); };
   if (hidden){ G.panel = {type: 'confirm', text: `${hidden} card${hidden > 1 ? 's' : ''} still face down. Walk away and never know?`, yes: 'Walk away', no: 'Stay a while', onYes: leave}; render(); }
@@ -2762,7 +2769,7 @@ function clickSlot(s){
   if (!c){ if (RUN.wsel != null){ RUN.hand[s] = RUN.hand[RUN.wsel]; RUN.hand[RUN.wsel] = null; RUN.wsel = s; render(); } return; }
   if (c.kind === 'weapon'){
     RUN.sel = null; RUN.wsel = RUN.wsel === s ? null : s;
-    say(RUN.wsel != null ? `${WEAPONS[c.id].n} ready.` : 'Fists, then.'); sfx('pick'); render(); return;
+    say(RUN.wsel != null ? `The ${WEAPONS[c.id].n.toLowerCase()}, in hand.` : 'Fists, then. Make them count.'); sfx('pick'); render(); return;
   }
   const d = ITEMS[c.id];
   if (RUN.sel === s){
@@ -3329,24 +3336,24 @@ function cardName(c){
   }
 }
 function describe(c){
-  if (!c.up) return c.peek ? `Face down, but you know it is: ${cardName(c)}. Turning it costs 1 vaccine.` : 'Face down. Turning it over costs 1 vaccine.';
+  if (!c.up) return c.peek ? `Face down, but you know what is under there: ${cardName(c)}. Turning it costs 1 vaccine.` : 'Face down. Something is under there. Turning it over costs 1 vaccine.';
   const n = `<b>${esc(cardName(c))}</b><br>`;
   switch (c.kind){
-    case 'zombie': { const t = ZOMBIES[c.type]; return n + `${c.hp} HP · hits for ${c.atk}${c.armor ? ` · armor ${c.armor}` : ''}<br>${c.stun ? `Frozen for ${c.stun} more turn${c.stun > 1 ? 's' : ''}.` : `Strikes in ${c.wait} turn${c.wait > 1 ? 's' : ''}.`} ${c.affix ? `<b>${esc(ELITES[c.affix].d)}</b> ` : ''}${esc(t.d)}`; }
-    case 'weapon': { const w = wstat(c); return n + `${c.trait ? `<b>${esc(TRAITS[c.trait].d)}</b> ` : ''}${c.mod ? `<b>${esc(MODS[c.mod].n)}: ${esc(MODS[c.mod].d)}</b> ` : ''}Deals ${w.dmg}${w.shots ? ' twice' : ''}. ${w.kind === 'gun' ? `${c.uses} round${c.uses === 1 ? '' : 's'} left (${AMMO_NAMES[w.ammo].toLowerCase()}). No one claws back at a gun.` : c.uses === Infinity ? '' : `${c.uses} use${c.uses === 1 ? '' : 's'} before it breaks. Anything you do not kill claws back, which uses up its next strike.`} ${esc(w.d || '')}`; }
+    case 'zombie': { const t = ZOMBIES[c.type]; return n + `${c.hp} health left · bites for ${c.atk}${c.armor ? ` · armor ${c.armor}` : ''}<br>${c.stun ? `Frozen stiff for ${c.stun} more turn${c.stun > 1 ? 's' : ''}.` : LV && LV.twist === 'fog' && LV.cells.includes(c) ? 'The fog hides when it will lunge.' : c.wait <= 1 ? 'It lunges at the end of this turn.' : `It lunges in ${c.wait} turns.`} ${c.affix ? `<b>${esc(ELITES[c.affix].d)}</b> ` : ''}${esc(t.d)}`; }
+    case 'weapon': { const w = wstat(c); return n + `${c.trait ? `<b>${esc(TRAITS[c.trait].d)}</b> ` : ''}${c.mod ? `<b>${esc(MODS[c.mod].n)}: ${esc(MODS[c.mod].d)}</b> ` : ''}Hits for ${w.dmg}${w.shots ? ', twice' : ''}. ${w.kind === 'gun' ? `${c.uses ? `${c.uses} round${c.uses === 1 ? '' : 's'} left` : 'Empty'} (takes ${AMMO_NAMES[w.ammo].toLowerCase()}). Nothing claws back at a gun, but everything hears it.` : c.uses === Infinity ? '' : `Good for ${c.uses} more swing${c.uses === 1 ? '' : 's'} before it breaks. Whatever it fails to kill swings back.`} ${c.trait || c.mod ? '' : esc(w.d || '')}`; }
     case 'item':
-      if (c.id === 'food') return n + `Restores ${c.v + (hasPerk('mara') ? 1 : 0)} health.`;
-      if (c.id === 'antidote') return n + `Restores ${c.v + (hasPerk('mara') ? 1 : 0)} vaccine.`;
-      if (c.id === 'ammo') return n + `${c.v} round${c.v > 1 ? 's' : ''}. Select, then tap a matching gun.`;
-      if (c.id === 'tools') return n + `${c.uses} uses left. ${esc(ITEMS.tools.d)}`;
+      if (c.id === 'food') return n + `Eat it: ${c.v + (hasPerk('mara') ? 1 : 0)} health back. ${['Do not read the label.', 'Cold, but it is food.', 'Somebody hid this well.'][c.uid % 3]}`;
+      if (c.id === 'antidote') return n + `Into the vein: ${c.v + (hasPerk('mara') ? 1 : 0)} vaccine back. Hours more, in a glass tube.`;
+      if (c.id === 'ammo') return n + `${c.v} round${c.v > 1 ? 's' : ''}. Ready it, then tap a gun that takes them.`;
+      if (c.id === 'tools') return n + `${c.uses} use${c.uses === 1 ? '' : 's'} left in it. ${esc(ITEMS.tools.d)}`;
       return n + esc(ITEMS[c.id].d || '');
     case 'hazard': return n + esc(HAZARDS[c.id].d);
-    case 'loc': return n + (c.used ? 'Picked clean.' : esc(LOCS[c.id].d));
-    case 'exit': return n + (c.locked ? 'Chained shut until the boss is dead.' : 'Leave for the next place. Anything still face down stays behind.');
-    case 'hatch': return n + 'Climb down to a hidden cellar full of supplies. You leave this place behind.';
-    case 'car': return n + 'Hotwire it: get the wires to 7½ without going over, and you drive past the next place entirely.';
-    case 'page': return n + 'Somebody wrote this down. Take it to read.';
-    case 'survivor': return n + `${esc(SURVIVORS[c.id].role)}. ${esc(SURVIVORS[c.id].found)} Tap to free them: they will make for your camp, and stay there for every run after this.`;
+    case 'loc': return n + (c.used ? 'Picked clean. Nothing left but dust.' : esc(LOCS[c.id].d));
+    case 'exit': return n + (c.locked ? 'Chained shut, and the key is on the boss. Kill it first.' : 'The way on. Whatever is still face down stays face down forever.');
+    case 'hatch': return n + 'A hatch in the floor, and somebody\'s cellar under it. Climb down for the supplies, and leave this place behind.';
+    case 'car': return n + 'Keys gone, tank half full. Hotwire it to 7½ without going over, and you drive straight past the next stop.';
+    case 'page': return n + 'Somebody wrote this down and wanted it found. Take it, and read it.';
+    case 'survivor': return n + `${esc(SURVIVORS[c.id].role)}. ${esc(SURVIVORS[c.id].found)} Tap to cut them loose. If there is a bed at the shelter, they will take it, and go topside for you too.`;
   }
   return n;
 }
@@ -3484,6 +3491,8 @@ function render(){
   VOICE.want(voiceFor());
 }
 function bigTitle(t, cls = ''){ return `<div class="logo ${cls}">${t.split(' ').map(w => `<span>${esc(w)}</span>`).join(' ')}</div>`; }
+// Scraps of radio heard on the title screen, a different one every visit.
+const CHATTER = ['…repeat, do not drink the tap water. Boil it. Then do not drink it anyway…', '…Hollow Labs is not a rescue site. I say again, Hollow Labs is not…', '…if anyone can hear this, the church on Elm is not safe. It was never safe…', '…day nine of the bloom. Temperature sixty-one. Visibility poor. Stay low…', '…this is Dispatch. Unit Nine, respond. Unit Nine, please respond…', '…smells sweet, like cut grass and syrup. If you smell it, it is already too late…', '…the ferry is not coming back. Stop waiting at the harbor…', '…all units, the dead do not sleep. Neither should you…', '…keep your doses close and your door closer…', '…north. Everyone who made it went north…'];
 function titleHTML(){
   const saved = store.get(RUN_KEY);
   const fan = [{kind: 'weapon', id: 'axe', uses: 3, up: true, uid: 1}, {kind: 'zombie', type: 'walker', hp: 3, atk: 1, wait: 2, armor: 0, up: true, uid: 4}, {kind: 'item', id: 'antidote', v: 5, up: true, uid: 2}]
@@ -3492,14 +3501,15 @@ function titleHTML(){
     <div class="fan">${fan}</div>
     ${bigTitle('CARDS OF THE LOST', 'main')}
     <div class="tagline">Turn them over. Every card costs a dose.</div>
+    <div class="chatter">${esc(R.pick(CHATTER))}</div>
     <div class="menu">
       ${saved ? `<button class="pbtn" data-a="continue">${esc(saved.RUN.name || CHARS[saved.RUN.char].n)} is still out there</button>` : ''}
-      <button class="pbtn" data-a="shelter">${!META.shelter ? 'Down to the shelter' : META.shelter.roster.length ? `Down to the shelter · ${META.shelter.roster.length} alive` : 'The shelter is silent'}</button>
-      <button class="pbtn ${META.nightOpen ? '' : 'locked'}" data-a="night">${META.nightOpen ? 'Walk the long night' : 'The long night · get the vaccine out first'}</button>
-      <button class="pbtn" data-a="journal">The journal · ${META.pages.length} of ${PAGES.length} pages</button>
-      <div class="toggles"><button class="pbtn small" data-a="music">Music · ${META.music ? 'playing' : 'silent'}</button><button class="pbtn small" data-a="mute">Sounds · ${META.muted ? 'hushed' : 'loud'}</button><button class="pbtn small" data-a="voice">Narrator · ${META.voice ? 'speaking' : 'quiet'}</button></div>
+      <button class="pbtn" data-a="shelter">${!META.shelter ? 'Climb down to the shelter' : META.shelter.roster.length ? `Climb down to the shelter · ${META.shelter.roster.length} still breathing` : 'The shelter has gone silent'}</button>
+      <button class="pbtn ${META.nightOpen ? '' : 'locked'}" data-a="night">${META.nightOpen ? 'Walk the long night · no shelter, no dawn' : 'The long night · not until the vaccine is out'}</button>
+      <button class="pbtn" data-a="journal">Read what the dead wrote · ${META.pages.length} of ${PAGES.length}</button>
+      <div class="toggles"><button class="pbtn small" data-a="music">The old record · ${META.music ? 'spinning' : 'stopped'}</button><button class="pbtn small" data-a="mute">The noises · ${META.muted ? 'hushed' : 'loud'}</button><button class="pbtn small" data-a="voice">The narrator · ${META.voice ? 'talking' : 'silent'}</button></div>
     </div>
-    <div class="metaline">${META.runs} trips topside · the vaccine got out ${META.wins} time${META.wins === 1 ? '' : 's'}${META.bestNight ? ` · longest night: ${META.bestNight}` : ''}</div>
+    <div class="metaline">${META.runs ? `${META.runs} trip${META.runs === 1 ? '' : 's'} topside · ${META.wins ? `the vaccine got out ${META.wins === 1 ? 'once' : META.wins + ' times'}` : 'the vaccine is still down there'}${META.bestNight ? ` · longest night: ${META.bestNight}` : ''}` : 'Nobody has opened the hatch yet.'}</div>
   </div>`;
 }
 function charsHTML(){
@@ -3511,11 +3521,11 @@ function charsHTML(){
       <div class="whoname">${esc(c.n)}</div><div class="whorole">${esc(c.role)}</div>
       <div class="whobio">${esc(c.bio)}</div>
       <div class="whoperk">${esc(c.perk)}</div>
-      <div class="whostat"><img class="g" src="${glyph('heart')}" alt=""> ${c.hp} health</div>
+      <div class="whostat"><img class="g" src="${glyph('heart')}" alt=""> ${c.hp} health in them</div>
       ${open ? '' : `<div class="wholock">Find ${c.need} journal pages and they will walk with you (${META.pages.length}/${c.need})</div>`}
     </button>`;
   }).join('');
-  return `<div class="shade"></div><div class="chars"><div class="hdr">${night ? 'THE LONG NIGHT' : 'WHO IS STILL ALIVE?'}</div><div class="whos">${cards}</div><button class="pbtn small" data-a="title">Not tonight</button></div>`;
+  return `<div class="shade"></div><div class="chars"><div class="hdr">${night ? 'WHO WALKS THE LONG NIGHT?' : 'WHO IS STILL ALIVE?'}</div><div class="whos">${cards}</div><button class="pbtn small" data-a="title">Not tonight</button></div>`;
 }
 function journalHTML(){
   const list = PAGES.map((p, i) => META.pages.includes(i) ? `<button class="jpage" data-a="read" data-i="${i}"><img src="${spriteURL('i_page')}" alt=""><span>${esc(p.t)}</span></button>` : `<div class="jpage missing"><span>Still out there</span></div>`).join('');
@@ -3584,7 +3594,7 @@ function endHTML(){
   return `<div class="shade ${E.won ? '' : 'red'}"></div>${E.won ? '' : '<div class="drips"></div>'}
   <div class="ending">
     ${bigTitle(head, E.won ? 'green' : '')}
-    <div class="tagline">${E.mode === 'night' ? `Night ${E.depth + 1}.` : esc(E.won ? 'Out of Hollow Labs with the vaccine.' : `${AREAS[E.area || 0].name}, ${E.label}.`)}</div>
+    <div class="tagline">${E.mode === 'night' ? `Night ${E.depth + 1}.` : esc(E.won ? 'Out of Hollow Labs, with the vaccine.' : `${E.turned ? 'Turned' : 'Fell'} in ${AREAS[E.area || 0].name}, ${E.label.toLowerCase()}.`)}</div>
     <div class="stats">
       <div><b>${s.kills}</b><span>put down</span></div><div><b>${s.flips}</b><span>cards turned</span></div>
       <div><b>${s.levels}</b><span>places cleared</span></div><div><b>${s.pages}</b><span>new pages</span></div>
@@ -3638,7 +3648,7 @@ function playHTML(){
   <button class="card inv packbtn" data-a="pack" data-tip="pack" style="left:248px;top:572px"><div class="cface k-item"><div class="artbox"><img class="art" src="${spriteURL('ui_pack')}" alt=""></div><div class="label">PACK ${packCount}/${RUN.pack.length}</div></div></button>
   ${fists}${slots}
   <button class="trash" data-a="trash" data-tip="trash" style="left:1160px;top:572px"><img src="${spriteURL('ui_trash')}" alt=""></button>
-  <button class="menubtn" data-a="menu">MENU</button>
+  <button class="menubtn" data-a="menu">BREATHE</button>
   ${curtain}
   ${panelHTML()}`;
 }
@@ -3674,7 +3684,7 @@ function panelHTML(){
       <div class="prow">${P.over ? '' : `<button class="pbtn" data-a="carStart" ${P.cards.length ? '' : 'disabled'}>Turn the key</button><button class="pbtn" data-a="no">Leave it</button>`}</div>`;
   } else if (P.type === 'menu'){
     body = `<div class="ptitle">CATCH YOUR BREATH</div><div class="ptext small">Every step is remembered. You can walk away and come back to this.</div>
-      <div class="prow col"><button class="pbtn" data-a="no">Back to it</button><button class="pbtn" data-a="help">The rules of the dead</button><div class="toggles"><button class="pbtn small" data-a="music">Music · ${META.music ? 'playing' : 'silent'}</button><button class="pbtn small" data-a="mute">Sounds · ${META.muted ? 'hushed' : 'loud'}</button><button class="pbtn small" data-a="voice">Narrator · ${META.voice ? 'speaking' : 'quiet'}</button></div><button class="pbtn" data-a="quit">Hole up for now</button><button class="pbtn danger" data-a="giveup">Lie down and let it end</button></div>`;
+      <div class="prow col"><button class="pbtn" data-a="no">Back to it</button><button class="pbtn" data-a="help">The rules of the dead</button><div class="toggles"><button class="pbtn small" data-a="music">The old record · ${META.music ? 'spinning' : 'stopped'}</button><button class="pbtn small" data-a="mute">The noises · ${META.muted ? 'hushed' : 'loud'}</button><button class="pbtn small" data-a="voice">The narrator · ${META.voice ? 'talking' : 'silent'}</button></div><button class="pbtn" data-a="quit">Hole up for now</button><button class="pbtn danger" data-a="giveup">Lie down and let it end</button></div>`;
   } else if (P.type === 'help'){
     body = `<div class="ptitle">THE RULES OF THE DEAD</div><div class="help">
       <p><b>Every card you turn costs a dose.</b> Tap a face-down card to turn it: 1 vaccine from the syringe. When the syringe runs dry, the infection takes 1 health every turn.</p>
@@ -3746,19 +3756,19 @@ const H = {
   },
   cell(d){ clickCell(+d.i); },
   slot(d){ clickSlot(+d.s); },
-  fists(){ if (G.busy || G.panel) return; RUN.wsel = null; RUN.sel = null; say('Fists, then.'); render(); },
+  fists(){ if (G.busy || G.panel) return; RUN.wsel = null; RUN.sel = null; say('Fists, then. Make them count.'); render(); },
   trash(){ trash(); },
   pack(){ if (G.busy || G.panel) return; G.panel = {type: 'pack'}; render(); },
   packslot(d){
     const k = +d.k, c = RUN.pack[k]; if (!c) return;
     const h = RUN.hand.indexOf(null);
     if (h >= 0){ RUN.hand[h] = c; RUN.pack[k] = null; }
-    else { const s = RUN.sel != null ? RUN.sel : RUN.wsel; if (s == null){ say('Hands are full. Select a card in your hands to swap it out.'); return; } RUN.pack[k] = RUN.hand[s]; RUN.hand[s] = c; RUN.sel = null; if (RUN.wsel === s) RUN.wsel = null; }
+    else { const s = RUN.sel != null ? RUN.sel : RUN.wsel; if (s == null){ say('Hands full. Pick something in your hands to swap out.'); return; } RUN.pack[k] = RUN.hand[s]; RUN.hand[s] = c; RUN.sel = null; if (RUN.wsel === s) RUN.wsel = null; }
     sfx('pick'); save(); render();
   },
   stash(){
     const s = RUN.sel != null ? RUN.sel : RUN.wsel; if (s == null) return;
-    const k = RUN.pack.indexOf(null); if (k < 0){ say('The backpack is full.'); return; }
+    const k = RUN.pack.indexOf(null); if (k < 0){ say('The pack is full. Something has to go.'); return; }
     RUN.pack[k] = RUN.hand[s]; removeHand(s); sfx('pick'); save(); render();
   },
   portrait(){ if (G.busy || G.panel) return; if (RUN.dodge && !RUN.dodging){ RUN.dodging = true; RUN.dodge = false; say('Weight on the balls of your feet. The next one misses.'); render(); } },
@@ -3771,13 +3781,13 @@ const H = {
   offer(d){
     const P = G.panel, c = LV.cells[P.i], O = c.offer, k = +d.k, card = O.cards[k];
     if (O.mode === 'trade'){
-      if (P.give == null){ say('Pick one of your cards to trade first.'); return; }
+      if (P.give == null){ say('Show him what you are offering first.'); return; }
       O.cards[k] = RUN.hand[P.give]; RUN.hand[P.give] = card; if (RUN.wsel === P.give) RUN.wsel = null; if (RUN.sel === P.give) RUN.sel = null;
-      P.give = null; c.used = true; G.panel = null; say(`Traded for ${cardName(card)}.`); sfx('pick'); save(); render(); return;
+      P.give = null; c.used = true; G.panel = null; say(`A fair trade, for once: ${cardName(card)}.`); sfx('pick'); save(); render(); return;
     }
-    if (!stow(card)){ say('No room. Use or throw something away first.'); sfx('deny'); return; }
+    if (!stow(card)){ say('No room for it. Use something, or toss it.'); sfx('deny'); return; }
     O.cards.splice(k, 1); O.picks--; sfx('pick');
-    if (O.picks <= 0 || !O.cards.length){ c.used = true; G.panel = null; say(`Took ${cardName(card)}.`); }
+    if (O.picks <= 0 || !O.cards.length){ c.used = true; G.panel = null; say(`${cardName(card)}. Nobody will miss it.`); }
     save(); render();
   },
   give(d){ G.panel.give = +d.s; render(); },
@@ -3801,18 +3811,20 @@ function tipFor(key){
     case 'offer': { const c = LV.cells[G.panel.i]; return c && c.offer && c.offer.cards[+v] ? describe(c.offer.cards[+v]) : null; }
     case 'fists': return describe({kind: 'weapon', id: 'fists', uses: Infinity, up: true});
     case 'trash': return '<b>Toss it</b><br>Select a card in your hands, then tap here to throw it away for good.';
-    case 'vac': return `<b>Vaccine ${RUN.vac}/${RUN.maxVac}</b><br>Turning a card costs 1. At 0, the infection costs you 1 health every turn.`;
-    case 'hp': return `<b>Health ${Math.max(0, RUN.hp)}/${RUN.maxHp}</b><br>Food restores it.`;
-    case 'portrait': return `<b>${esc(RUN.name || CHARS[RUN.char].n)}</b><br>${esc(CHARS[RUN.char].perk)}${RUN.mode === 'night' ? ' Tap to get ready to dodge, once per board.' : ''}`;
-    case 'noise': return `<b>Noise ${LV.noise}/3</b><br>Gunshots make noise. At 3, something wanders in.`;
+    case 'vac': return `<b>Vaccine ${RUN.vac} of ${RUN.maxVac}</b><br>Every card you turn costs a dose. When the syringe runs dry, the bloom eats 1 health a turn.`;
+    case 'hp': return `<b>Health ${Math.max(0, RUN.hp)} of ${RUN.maxHp}</b><br>Food and bandages put it back. At 0, you get up as one of them.`;
+    case 'portrait': return `<b>${esc(RUN.name || CHARS[RUN.char].n)}</b><br>${esc(CHARS[RUN.char].perk)}${RUN.mode === 'night' ? ' Tap the portrait to get ready to dodge, once on every board.' : ''}`;
+    case 'noise': return `<b>Noise ${LV.noise} of 3</b><br>Every gunshot carries. At 3, something comes to see what all the fuss is.`;
   }
   return null;
 }
 const TOUCH = typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches;
+// The message box is small: long card text drops to a smaller size so all of it fits.
+function fitMsg(el){ for (const px of [17, 15, 14, 13, 12, 11]){ el.style.fontSize = px + 'px'; el.style.lineHeight = px < 15 ? '1.15' : ''; if (el.scrollHeight <= el.clientHeight + 1) return; } }
 function showTip(t){
   const tip = t ? tipFor(t.dataset.tip) : null;
   G.tip = tip;
-  const el = document.getElementById('msg'); if (el) el.innerHTML = `<div>${tip || esc(G.msg)}</div>`;
+  const el = document.getElementById('msg'); if (el){ el.innerHTML = `<div>${tip || esc(G.msg)}</div>`; fitMsg(el); }
   return tip;
 }
 function bindInput(root){
@@ -4013,14 +4025,14 @@ function produce(rep){
     if (r.t === 'radio'){ radio += r.lv + w; rep.pops.push({f, s, txt: 'listening…'}); }
   });
   sh.food += food; sh.scrap += scrap; sh.radio += radio;
-  if (food) rep.notes.push(`The kitchen made ${food} food.`);
-  if (scrap) rep.notes.push(`The workshop salvaged ${scrap} scrap.`);
+  if (food) rep.notes.push(`The kitchen stretched what it had into ${food} food.`);
+  if (scrap) rep.notes.push(`The workshop picked ${scrap} scrap out of the junk pile.`);
   const eaten = sh.roster.length;
   sh.food -= eaten; sh.hungry = sh.food < 0; if (sh.food < 0) sh.food = 0;
-  rep.notes.push(sh.hungry ? `Not enough food for ${eaten}. Whoever goes out next goes hungry: 2 less health.` : `${eaten} ${eaten === 1 ? 'mouth' : 'mouths'} fed.`);
+  rep.notes.push(sh.hungry ? `Not enough food for ${eaten}. Bellies are empty, and whoever climbs up next goes hungry: 2 less health.` : `${eaten} ${eaten === 1 ? 'mouth' : 'mouths'} fed. Nobody full, nobody starving.`);
   if (sh.radio >= RADIO_CALL){
-    if (sh.roster.length < capacity()){ sh.radio -= RADIO_CALL; const d = drifter(); sh.roster.push(d); rep.notes.push(`${d.name} answered the radio and made it to the door.`); }
-    else rep.notes.push('Someone answered the radio, but there is no bed for them.');
+    if (sh.roster.length < capacity()){ sh.radio -= RADIO_CALL; const d = drifter(); sh.roster.push(d); rep.notes.push(`A voice on the radio, then a knock at the hatch: ${d.name} made it in.`); }
+    else rep.notes.push('A voice answered the radio, asking for a bed. There was none to give.');
   }
   if (!sh.roster.length) rep.notes.push('Nobody is left to eat what the kitchen made.');
 }
@@ -4048,7 +4060,7 @@ function startDefense(uid){
   LV = {cols, rows, cells, boss: false, bonus: false, locked: false, defense: true, turn: 0, alarm: 0, noise: 0, twist: null, horde: 0, fire: []};
   G.screen = 'play'; G.panel = null; G.ghosts = [];
   LV.dealT = now(); G.curtain = {t: now(), title: 'THE SHELTER', sub: `${n} at the door`}; sfx('deal');
-  say(`${n} of them at the door. ${m.name} goes up to meet them.`); render();
+  say(`${n} of them at the door, and ${m.name} going up the ladder to meet them.`); render();
 }
 function defenseEnd(won){
   const sh = S(), m = sh.roster.find(x => x.uid === RUN.member), n = RUN.defense, notes = [];
