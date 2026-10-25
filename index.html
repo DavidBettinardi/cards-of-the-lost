@@ -615,6 +615,19 @@ b{color:#fff;font-weight:600}
 #msg[data-len="long"]{font-size:14px;line-height:1.2}
 #msg[data-len="tiny"]{font-size:12px;line-height:1.15}
 
+/* residents: a layer of their own over the rooms, so they keep walking through every redraw */
+#dwl{position:absolute;left:0;top:0;width:1280px;height:720px;pointer-events:none;z-index:6}
+.ag{position:absolute;left:0;top:0;width:48px;height:72px;pointer-events:auto;cursor:pointer;will-change:transform}
+.ag i{display:block;width:48px;height:72px;background-size:96px 72px;background-position:0 0;image-rendering:pixelated;filter:drop-shadow(2px 2px 0 rgba(0,0,0,.45))}
+.ag.walk i{animation:stride .5s steps(2) infinite}
+.ag.flip i{transform:scaleX(-1)}
+.ag.riding i{filter:brightness(.8) drop-shadow(2px 2px 0 rgba(0,0,0,.45))}
+.ag.sel i{filter:drop-shadow(0 0 3px var(--gold)) drop-shadow(0 0 3px var(--gold))}
+.ag .bub{position:absolute;bottom:74px;left:50%;transform:translateX(-50%);white-space:nowrap;font-family:var(--f-body);font-weight:400;font-size:12px;line-height:1;color:#141414;background:#e8e4d8;padding:4px 7px;border:2px solid #000;border-radius:7px;box-shadow:2px 2px 0 rgba(0,0,0,.5);opacity:0;transition:opacity .25s;pointer-events:none}
+.ag .bub.on{opacity:1}
+.ag .bub::after{content:"";position:absolute;left:50%;bottom:-7px;margin-left:-4px;border:4px solid transparent;border-top-color:#000}
+.shelter .shade{z-index:19}
+
 </style>
 <div id="rotate" hidden>Turn your phone sideways for a bigger table.</div>
 <div id="wrap"><div id="stage"><canvas id="bgc" width="320" height="180"></canvas><div id="view"></div><div id="fx"></div><div id="tint"></div><div id="post"></div></div></div>
@@ -3489,6 +3502,7 @@ function render(){
   MUSIC.play(trackFor());
   MUSIC.tension = tension();
   VOICE.want(voiceFor());
+  if (typeof Dwell !== 'undefined') Dwell.sync();
 }
 function bigTitle(t, cls = ''){ return `<div class="logo ${cls}">${t.split(' ').map(w => `<span>${esc(w)}</span>`).join(' ')}</div>`; }
 // Scraps of radio heard on the title screen, a different one every visit.
@@ -4148,14 +4162,13 @@ function shelterHTML(){
     return `<div class="sfloor">${row.map((r, s) => {
       if (!r) return `<button class="sroom empty" data-a="roomTap" data-f="${f}" data-s="${s}"><span>+ Clear this space</span></button>`;
       const R0 = ROOMS[r.t], ws = workersIn(f, s), here = r.t === 'bunks' ? sh.roster.filter(m => !m.room).slice(0, 3 * r.lv) : ws;
-      const people = here.map((m, k) => dwellerHTML(m, k, r.t === 'bunks', selM && selM.uid === m.uid)).join('');
       const fresh = G.fresh === roomKey(f, s) ? 'built' : '', idle = R0.work && !ws.length ? 'idle' : '';
       const pops = (G.pops || []).filter(q => q.f === f && q.s === s).map((q, k) => `<span class="pop" style="animation-delay:${.3 + k * .35}s">${esc(q.txt)}</span>`).join('');
       const slots = R0.work ? `<span class="wslots">${[0, 1].map(k => `<i class="${ws[k] ? 'on' : ''}"></i>`).join('')}</span>` : '';
       const target = selM && R0.work ? (selM.room === roomKey(f, s) ? 'leave' : ws.length < 2 ? 'target' : '') : '';
       return `<button class="sroom t-${r.t} ${target} ${fresh} ${idle}" data-a="roomTap" data-f="${f}" data-s="${s}">
         <span class="rname">${esc(R0.n)} <b>${'★'.repeat(r.lv)}</b></span>${slots}
-        <img class="ricon" src="${spriteURL(R0.icon)}" alt="">${roomFX(r, f, s, ws)}${people}${pops}
+        <img class="ricon" src="${spriteURL(R0.icon)}" alt="">${roomFX(r, f, s, ws)}${pops}
         <span class="rout">${esc(R0.out(r.lv, ws.length))}</span></button>`;
     }).join('')}</div>`;
   }).join('');
@@ -4234,6 +4247,104 @@ function siegeHTML(){
     <div class="lcol wide">${who}</div>
     <div class="prow"><button class="pbtn small" data-a="bar">Bar the door and pray · they will take some stores</button></div></div>`;
 }
+
+// ---------------------------------------------------------------- the people who live here
+// One element per resident, kept outside the redrawn screen so nobody teleports when the shelter refreshes.
+// Each walks the floor they are on; to change floors they walk to the shaft and ride. Workers keep to their
+// station with the odd break; everyone else wanders between the bunks and whatever rooms are built.
+const CHATTER_IN = {
+  idle: ['Quiet tonight.', 'Anyone seen my socks?', 'Who ate the peaches?', 'Radio said rain.', 'I miss coffee.', 'Heard that?', 'Just the pipes.', 'Beans again.', 'We will make it.', 'My feet hurt.', 'Hum something.', 'Is it day or night up there?', 'I keep counting the doors.', 'Not a sound. Good.'],
+  kitchen: ['Soup again.', 'Who keeps salting this?', 'Smells almost like food.'], workshop: ['Pass the wrench.', 'Almost got it.', 'This will hold. Probably.'],
+  radio: ['Anyone out there?', 'Static. More static.', 'Say again? Say again.'], infirmary: ['Hold still.', 'Clean hands, clean hands.', 'Breathe for me.'],
+  guard: ['Nothing moving.', 'Did that shadow just move?', 'All quiet up top.'], armory: ['Cleaning the barrels.', 'Count the rounds twice.'],
+  storage: ['Counting cans.', 'Who moved the blankets?'], bunks: ['Five more minutes.', 'zzz…', 'Bad dream. Just a dream.'], hungry: ['So hungry.', 'When do we eat?', 'Stomach is eating itself.'],
+};
+const Dwell = {
+  layer: null, agents: {}, slots: {}, floorY: {}, shaftX: 54, raf: 0, last: 0,
+  sync(){
+    if (G.headless || typeof document === 'undefined') return;
+    const st = document.getElementById('stage'); if (!st) return;
+    if (!this.layer){ this.layer = document.createElement('div'); this.layer.id = 'dwl'; st.appendChild(this.layer); }
+    const on = G.screen === 'shelter' && META.shelter && META.shelter.roster.length;
+    this.layer.style.display = on ? '' : 'none';
+    if (!on){ cancelAnimationFrame(this.raf); this.raf = 0; return; }
+    this.measure();
+    const sh = META.shelter, alive = new Set(sh.roster.map(m => m.uid));
+    for (const uid of Object.keys(this.agents)) if (!alive.has(+uid)){ this.agents[uid].el.remove(); delete this.agents[uid]; }
+    sh.roster.forEach(m => { const a = this.agents[m.uid]; if (!a) this.spawn(m); else { if (a.room !== m.room){ a.room = m.room; a.wait = 0; a.path = []; a.state = 'idle'; } a.m = m; } });
+    const away = (G.sendoff && G.sendoff.face) || (G.homecoming && G.homecoming.face);
+    for (const a of Object.values(this.agents)){ a.el.classList.toggle('sel', G.selM === a.m.uid); a.el.style.visibility = away && a.m.face === away ? 'hidden' : ''; if (!this.slots[a.key]) this.home(a, true); }
+    if (!this.raf){ this.last = performance.now(); this.raf = requestAnimationFrame(t => this.tick(t)); }
+  },
+  // where every room sits on the stage right now, and where its floor is
+  measure(){
+    const st = document.getElementById('stage'), sr = st.getBoundingClientRect(), k = sr.width / 1280 || 1;
+    this.slots = {}; this.floorY = {};
+    document.querySelectorAll('.sroom[data-f]').forEach(el => {
+      const r = el.getBoundingClientRect(), f = +el.dataset.f, s = +el.dataset.s, top = (r.top - sr.top) / k, h = r.height / k || 152;
+      this.slots[f + ':' + s] = {f, s, x0: (r.left - sr.left) / k, x1: (r.right - sr.left) / k, feet: top + h * 118 / 152, built: !!roomAt(f, s)};
+      this.floorY[f] = top + h * 118 / 152;
+    });
+    const shaft = document.querySelector('.shaft'); if (shaft){ const r = shaft.getBoundingClientRect(); this.shaftX = ((r.left + r.right) / 2 - sr.left) / k; }
+  },
+  keys(pred){ return Object.keys(this.slots).filter(k => this.slots[k].built && pred(roomAt(this.slots[k].f, this.slots[k].s))); },
+  bunks(){ return this.keys(r => r.t === 'bunks'); },
+  spawn(m){
+    const el = document.createElement('span'); el.className = 'ag'; el.dataset.a = 'selMember'; el.dataset.u = m.uid;
+    el.innerHTML = `<i style="background-image:url(${walkerURL(m.face)})"></i><b class="bub"></b>`;
+    this.layer.appendChild(el);
+    const a = this.agents[m.uid] = {m, el, room: m.room, state: 'idle', wait: Math.random() * 2, path: [], face: Math.random() < .5 ? 1 : -1, bubT: 0};
+    this.home(a, true);
+  },
+  // put someone straight into the room they belong in (a fresh arrival, or their room just vanished)
+  home(a, place){
+    const key = a.m.room && this.slots[a.m.room] ? a.m.room : R.pick(this.bunks().length ? this.bunks() : Object.keys(this.slots));
+    const sl = this.slots[key]; if (!sl) return;
+    a.key = key; a.f = sl.f; a.x = sl.x0 + 30 + Math.random() * Math.max(10, sl.x1 - sl.x0 - 60); a.y = sl.feet; a.path = []; a.state = 'idle'; a.wait = Math.random() * 3;
+    a.el.style.transform = `translate(${Math.round(a.x - 24)}px, ${Math.round(a.y - 70)}px)`;
+  },
+  // what next: workers mostly work, everyone else drifts; the hungry complain
+  plan(a){
+    const m = a.m, work = m.room && this.slots[m.room] ? m.room : null;
+    let key;
+    if (work) key = Math.random() < .78 ? work : R.pick(this.keys(r => r.t === 'kitchen' || r.t === 'bunks' || r.t === 'storage').concat(work));
+    else key = Math.random() < .5 && this.bunks().length ? R.pick(this.bunks()) : R.pick(this.keys(() => true));
+    const sl = this.slots[key]; if (!sl) return;
+    const x = sl.x0 + 26 + Math.random() * Math.max(10, sl.x1 - sl.x0 - 52);
+    a.path = a.f === sl.f ? [{x}] : [{x: this.shaftX}, {ride: sl.f}, {x}];
+    a.key = key; a.dest = key; a.state = 'walk';
+    a.linger = key === work ? 4 + Math.random() * 6 : 2 + Math.random() * 5;
+  },
+  say(a, text){ const b = a.el.querySelector('.bub'); b.textContent = text; b.classList.add('on'); a.bubT = 2.6; },
+  tick(t){
+    this.raf = requestAnimationFrame(tt => this.tick(tt));
+    const dt = Math.max(0, Math.min(.05, (t - this.last) / 1000)); this.last = Math.max(this.last, t);  // never backwards, never a big jump after sleep
+    const sh = META.shelter; if (!sh) return;
+    for (const a of Object.values(this.agents)){
+      if (a.bubT > 0 && (a.bubT -= dt) <= 0) a.el.querySelector('.bub').classList.remove('on');
+      if (a.state === 'idle'){
+        if ((a.wait -= dt) <= 0) this.plan(a);
+      } else {
+        const wp = a.path[0];
+        if (!wp){ a.state = 'idle'; a.wait = a.linger || 3;
+          if (Math.random() < .3){ const r = this.slots[a.key] && roomAt(this.slots[a.key].f, this.slots[a.key].s), pool = sh.hungry && Math.random() < .5 ? CHATTER_IN.hungry : (r && CHATTER_IN[r.t] && Math.random() < .6 ? CHATTER_IN[r.t] : CHATTER_IN.idle); this.say(a, R.pick(pool)); }
+        } else if (wp.ride != null){
+          const ty = this.floorY[wp.ride]; if (ty == null){ a.path = []; continue; }
+          const dy = ty - a.y, step = 95 * dt;
+          if (Math.abs(dy) <= step){ a.y = ty; a.f = wp.ride; a.path.shift(); } else a.y += Math.sign(dy) * step;
+        } else {
+          const dx = wp.x - a.x, step = 44 * dt;
+          if (dx) a.face = dx > 0 ? 1 : -1;
+          if (Math.abs(dx) <= step){ a.x = wp.x; a.path.shift(); } else a.x += Math.sign(dx) * step;
+        }
+      }
+      const walking = a.state === 'walk' && a.path[0] && a.path[0].ride == null;
+      a.el.classList.toggle('walk', walking); a.el.classList.toggle('flip', a.face < 0); a.el.classList.toggle('riding', a.state === 'walk' && !!a.path[0] && a.path[0].ride != null);
+      a.el.style.transform = `translate(${Math.round(a.x - 24)}px, ${Math.round(a.y - 70)}px)`;
+    }
+  },
+};
+if (typeof window !== 'undefined' && window.__COTL) window.__COTL.Dwell = Dwell;
 
 boot();
 </script>
